@@ -54,20 +54,26 @@ class AccountSetUp(object):
                                   args['user_password'],
                                   args['user_email'])
         self.__tenant_add_user(project, user, args['user_role'])
-        self.__nova_quotas(project.id, **args['NOVA_QUOTAS'])
-        self.__cinder_quotas(project.id, **args['CINDER_QUOTAS'])
+        if 'NOVA_QUOTAS' in args.keys():
+            self.__nova_quotas(project.id, **args['NOVA_QUOTAS'])
+        if 'CINDER_QUOTAS' in args.keys():
+            self.__cinder_quotas(project.id, **args['CINDER_QUOTAS'])
         nova = nova_v1.Client(args['user_name'], args['user_password'],
                               project.name, self.auth_url)
-        for group, rules in args['SECURITY_GROUPS'].iteritems():
-            self.__security_group(nova, group, **rules)
-        self.__create_keypairs(nova, **args['KEYPAIRS'])
-        self.__create_source_file(args['SOURCE_FILE']['file'], self.auth_url, project, user)
-        keystone = key_v2.Client(username=args['user_name'],
-                                 password=args['user_password'],
-                                 tenant_name=project.name, auth_url=self.auth_url)
-        token, glance_ep = self.__setup_glance(keystone)
-        glance = glance_client('1', token=token, endpoint=glance_ep)
-        self.__create_images(glance, **args['IMAGES'])
+        if 'SECURITY_GROUPS' in args.keys():
+            for group, rules in args['SECURITY_GROUPS'].iteritems():
+                self.__security_group(nova, group, **rules)
+        if 'KEYPAIRS' in args.keys():
+            self.__create_keypairs(nova, **args['KEYPAIRS'])
+        if 'SOURCE_FILE' in args.keys():
+            self.__create_source_file(args['SOURCE_FILE']['file'], self.auth_url, project, user)
+        if 'IMAGES' in args.keys():
+            keystone = key_v2.Client(username=args['user_name'],
+                                     password=args['user_password'],
+                                     tenant_name=project.name, auth_url=self.auth_url)
+            token, glance_ep = self.__setup_glance(keystone)
+            glance = glance_client('1', token=token, endpoint=glance_ep)
+            self.__create_images(glance, **args['IMAGES'])
 
     def __project_create(self, name, description):
         LOG.debug('Creating project:%s' % name)
@@ -116,7 +122,7 @@ class AccountSetUp(object):
 
     def __security_group(self, nova_client, group, **rules):
         group_info = group.split(':')
-        LOG.debug('Creating security group:%s' % group_info[1])
+        LOG.debug('Creating security group:%s' % group_info[0])
         try:
             group = vars(nova_client.security_groups.create(group_info[0], group_info[1]))['_info']
         except nova_bad_request:
