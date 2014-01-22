@@ -146,8 +146,8 @@ class AccountSetUp(object):
         text += 'export OS_AUTH_URL=' + auth_url + '\n'
         text += 'export OS_TENANT_ID=' + project.id + '\n'
         text += 'export OS_TENANT_NAME=' + project.name + '\n'
-        text += 'OS_USERNAME=' + user.name + '\n'
-        text += 'echo "Please enter your OpenStack Password: \n'
+        text += 'export OS_USERNAME=' + user.name + '\n'
+        text += 'echo "Please enter your OpenStack Password:"\n'
         text += 'read -s OS_PASSWORD_INPUT\n'
         text += 'export OS_PASSWORD=$OS_PASSWORD_INPUT\n'
         f = open(file_location, 'w+')
