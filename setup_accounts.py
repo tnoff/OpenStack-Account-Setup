@@ -8,6 +8,7 @@ import logging
 from novaclient.v1_1 import client as nova_v1
 from novaclient.exceptions import BadRequest as nova_bad_request
 from novaclient.exceptions import Conflict as nova_conflict
+from novaclient.exceptions import ClientException as nova_client_exception
 
 LOGGING_FORMAT = '%(asctime)s--%(levelname)s--%(message)s'
 logging.basicConfig(format=LOGGING_FORMAT)
@@ -125,7 +126,7 @@ class AccountSetUp(object):
         LOG.debug('Creating security group:%s' % group_info[0])
         try:
             group = vars(nova_client.security_groups.create(group_info[0], group_info[1]))['_info']
-        except nova_bad_request:
+        except (nova_bad_request, nova_client_exception):
             LOG.debug('Group already exists')
             for g in nova_client.security_groups.list():
                 group = vars(nova_client.security_groups.get(g))['_info']
