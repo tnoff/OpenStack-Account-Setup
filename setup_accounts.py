@@ -166,7 +166,8 @@ class AccountSetUp(object):
             image_info['name'] = image_name
             file_location = image_info.pop('file', None)
             new_image = glance.images.create(**image_info)
-            new_image.update(data=open(file_location,'rb'))
+            if file_location is not None:
+                new_image.update(data=open(file_location,'rb'))
 
 def parse_args():
     a = argparse.ArgumentParser(description='Setup accounts on an OpenStack cluster')
