@@ -55,6 +55,11 @@ class AccountSetUp(object):
                                   args['user_password'],
                                   args['user_email'])
         self.__tenant_add_user(project, user, args['user_role'])
+        if 'FLAVORS' in args.keys():
+            for flavor in args['FLAVORS']:
+                a = args['FLAVORS'][flavor]
+                a['name'] = flavor
+                self.__create_flavor(**a)
         if 'NOVA_QUOTAS' in args.keys():
             self.__nova_quotas(project.id, **args['NOVA_QUOTAS'])
         if 'CINDER_QUOTAS' in args.keys():
@@ -95,7 +100,6 @@ class AccountSetUp(object):
             for user in self.keystone.users.list():
                 if user.name == name:
                     return user
-
     def __tenant_add_user(self, project, user, role_name):
         role_id = None
         for role in self.keystone.roles.list():
@@ -106,6 +110,15 @@ class AccountSetUp(object):
             self.keystone.tenants.add_user(project.id, user.id, role_id)
         except keystone_conflict:
             LOG.error("User already has role")
+
+    def __create_flavor(self, **args):
+        LOG.debug('Creating flavors')
+        try:
+            self.nova.flavors.create(**args)
+        except TypeError as te:
+            LOG.error('Cannot create flavor:%s' % te)
+        except nova_conflict as nc:
+            LOG.error('Cannot create flavor:%s' % nc)
 
     def __nova_quotas(self, project_id, **args):
         LOG.debug('Updating nova quotas')
@@ -167,7 +180,7 @@ class AccountSetUp(object):
             file_location = image_info.pop('file', None)
             new_image = glance.images.create(**image_info)
             if file_location is not None:
-                new_image.update(data=open(file_location,'rb'))
+                new_image.update(data=open(file_location, 'rb'))
 
 def parse_args():
     a = argparse.ArgumentParser(description='Setup accounts on an OpenStack cluster')
