@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import argparse
 from cinderclient.v1 import client as cinder_v1
 from configobj import ConfigObj
