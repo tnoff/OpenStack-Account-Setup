@@ -41,8 +41,8 @@ def get_env_args(args):
     return args
 
 def main():
-    log.debug('Reading CLI args')
     args = vars(parse_args())
+    log.debug('Reading CLI args')
     args = get_env_args(args)
     log.debug('Initialzing Account Setup')
     a = AccountSetup(args['username'],
