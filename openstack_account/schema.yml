@@ -1,0 +1,158 @@
+---
+title: 'Account Setup Schema'
+type: 'object'
+required:
+    - 'user'
+properties:
+    user:
+        title: 'user'
+        type: 'object'
+        required: 
+            - 'name'
+            - 'password'
+        properties:
+            name:
+                type: 'string'
+            password:
+                type: 'string'
+            email:
+                type:
+                    - 'string'
+                    - 'null'
+    projects:
+        title: 'projects'
+        type: 'array'
+        items:
+            title: 'project'
+            type: 'object'
+            required: 
+                - 'name'
+            properties:
+                name:
+                    type: 'string'
+                description:
+                    type: 'string'
+                role:
+                    type: 'string'
+    flavors:
+        title: 'flavors'
+        type: 'array'
+        items:
+            title: 'flavor'
+            type: 'object'
+            required: 
+                - 'name'
+                - 'disk'
+                - 'vcpus'
+                - 'ram'
+            properties:
+                name:
+                    type: 'string'
+                ram:
+                    type: 'number'
+                disk:
+                    type: 'number'
+                vcpus:
+                    type: 'number'
+    nova_quotas:
+        title: 'nova_quotas'
+        type: 'array'
+        items:
+            title: 'nova_quota'
+            type: 'object'
+            required: 
+                - 'tenant_name'
+            properties:
+                tenant_name:
+                    type: 'string'
+    cinder_quotas:
+        title: 'cinder_quotas'
+        type: 'array'
+        items:
+            title: 'cinder_quota'
+            type: 'object'
+            required: 
+                - 'tenant_name'
+            properties:
+                tenant_name:
+                    type: 'string'
+    security_grups:
+        title: 'security_groups'
+        type: 'array'
+        items:
+            title: 'security_group'
+            type: 'object'
+            required:
+                - 'name'
+                - 'description'
+                - 'tenant_name'
+            properties:
+                name:
+                    type: 'string'
+                tenant_name:
+                    type: 'string'
+                description:
+                    type:
+                        - 'string'
+                        - 'null'
+                rules:
+                    type: 'array'
+                    items:
+                        title: 'rule'
+                        type: 'object'
+                        properties:
+                            from_port:
+                                type: 'number'
+                            to_port:
+                                type: 'number'
+                            ip_protocol:
+                                type: 'string'
+                            cidr:
+                                type: 'string'
+    keypairs:
+        title: 'keypairs'
+        type: 'array'
+        items:
+            title: 'keypair'
+            type: 'object'
+            required:
+                - 'name'
+            properties:
+                name:
+                    type: 'string'
+                file:
+                    type: 'string'
+    source_files:
+        title: 'source_files'
+        type: 'array'
+        items:
+            title: 'source_file'
+            type: 'object'
+            required:
+                - 'tenant_name'
+                - 'file'
+            properties:
+                tenant_name:
+                    type: 'string'
+                file:
+                    type: 'string'
+    images:
+        title: 'images'
+        type: 'array'
+        items:
+            title: 'image'
+            type: 'object'
+            required:
+                - 'tenant_name'
+                - 'disk_format'
+                - 'container_format'
+                - 'name'
+            properties:
+                name:
+                    type: 'string'
+                tenant_name:
+                    type: 'string'
+                container_format:
+                    type: 'string'
+                disk_format:
+                    type: 'string'

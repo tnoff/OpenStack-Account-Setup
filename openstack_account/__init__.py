@@ -1,12 +1,17 @@
 from cinderclient.v1 import client as cinder_v1
 from glanceclient import Client as glance_client
+from jsonschema import validate
 from keystoneclient.v2_0 import client as key_v2
 from keystoneclient.openstack.common.apiclient import exceptions as keystone_exceptions
 import logging
 from novaclient.v1_1 import client as nova_v1
 from novaclient import exceptions as nova_exceptions
+import os
+import yaml
 
 log = logging.getLogger(__name__)
+dir_path = os.path.dirname(__file__)
+schema = os.path.join(dir_path, 'schema.yml')
 
 class AccountSetup(object):
     def __init__(self, username, password, tenant_name, auth_url):
@@ -86,11 +91,15 @@ class AccountSetup(object):
             project = self.__find_project(args['tenant_name'] or  None)
         except keystone_exceptions.Conflict:
             project = self.__find_project(args['tenant_name'] or None)
-        try:
-            project.add_user(user.id, role.id)
-        except keystone_exceptions.Conflict:
-            # Role already exists
-            pass
+        if role:
+            try:
+                project.add_user(user.id, role.id)
+                log.debug('Added user:%s to project:%s with role:%s' %
+                          (user.id, project.id, role.id))
+            except keystone_exceptions.Conflict:
+                # Role already exists
+                log.debug('Role exits user:%s to project:%s with role:%s' %
+                          (user.id, project.id, role.id))
         log.info('Projected created:%s' % project)
 
     def create_flavor(self, **args):
@@ -186,6 +195,10 @@ class AccountSetup(object):
         log.info('Created image:%s' % image)
 
     def setup_config(self, config):
+        log.debug('Checking schema')
+        with open(schema, 'r') as f:
+            schema_data = yaml.load(f)
+        validate(config, schema_data)
         try:
             user = self.create_user(**config['user'])
             user_password = config['user']['password']

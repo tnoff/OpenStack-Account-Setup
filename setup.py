@@ -19,7 +19,12 @@ setuptools.setup(
             'os-account = openstack_account.cli:main',
         ]
     },
-    packages=setuptools.find_packages(),
+    packages=[
+        'openstack_account'
+    ],
+    package_data={
+        'openstack_account' : ['schema.yml'],
+    },
     name='openstack_account',
     version=VERSION,
 )
