@@ -2,11 +2,17 @@ from cinderclient.v1 import client as cinder_v1
 from glanceclient import Client as glance_client
 from keystoneclient.v2_0 import client as key_v2
 from keystoneclient.openstack.common.apiclient import exceptions as keystone_exceptions
+import logging
 from novaclient.v1_1 import client as nova_v1
 from novaclient import exceptions as nova_exceptions
 
+logging_format = '%(asctime)s--%(levelname)s--%(message)s'
+logging.basicConfig(format=logging_format)
+log = logging.getLogger(__name__)
+
 class AccountSetup(object):
     def __init__(self, username, password, tenant_name, auth_url):
+        log.debug('Creating Account Setup Object')
         self.os_username = username
         self.os_password = password
         self.os_tenant_name = tenant_name
@@ -64,14 +70,17 @@ class AccountSetup(object):
         return None
 
     def create_user(self, **args):
+        log.debug('Creating user:%s' % args)
         try:
             user = self.keystone.users.create(**args)
         except keystone_exceptions.Conflict:
             # User allready exists
             user = self.__find_user(args['name'])
+        log.info('User created:%s' % user)
         return user
 
     def create_project(self, user, **args):
+        log.debug('Creating project:%s' % args)
         role = self.__find_role(args.pop('role', None))
         args['tenant_name'] = args.pop('name', None)
         try:
@@ -84,8 +93,10 @@ class AccountSetup(object):
         except keystone_exceptions.Conflict:
             # Role already exists
             pass
+        log.info('Projected created:%s' % project)
 
     def create_flavor(self, **args):
+        log.info('Creating flavor:%s' % args)
         try:
             self.nova.flavors.create(**args)
         except nova_exceptions.Conflict:
@@ -93,14 +104,17 @@ class AccountSetup(object):
             pass
 
     def set_nova_quota(self, **args):
+        log.info('Setting nova quotas:%s' % args)
         project = self.__find_project(args.pop('tenant_name', None))
         self.nova.quotas.update(project.id, **args)
 
     def set_cinder_quota(self, **args):
+        log.info('Setting cinder quotas:%s' % args)
         project = self.__find_project(args.pop('tenant_name', None))
         self.cinder.quotas.update(project.id, **args)
 
     def create_security_group(self, user, user_password, **args):
+        log.debug('Creating security group:%s' % args)
         tenant_name = args.pop('tenant_name', None)
         rules = args.pop('rules', None)
         nova = nova_v1.Client(user.name,
@@ -112,14 +126,17 @@ class AccountSetup(object):
         except nova_exceptions.BadRequest:
             # Group already exists
             group = self.__find_sec_group(nova, args.pop('name', None))
+        log.info("Created security group:%s" % group)
         for rule in rules:
             try:
                 nova.security_group_rules.create(group, **rule)
             except nova_exceptions.BadRequest:
                 # Rule already exits
                 pass
+            log.info('Created security group rule:%s' % rule)
 
     def create_keypair(self, user, user_password, **args):
+        log.info('Creating keypair:%s' % args)
         tenant = self.__find_valid_tenant(user)
         nova = nova_v1.Client(user.name,
                               user_password,
@@ -135,6 +152,7 @@ class AccountSetup(object):
             pass
 
     def create_source_file(self, user, **args):
+        log.info('Creating source file:%s' % args)
         tenant = self.__find_project(args.pop('tenant_name', None))
         stringy = '#!/bin/bash\n'
         stringy += 'export OS_USERNAME="%s"\n' % user.name
@@ -148,6 +166,7 @@ class AccountSetup(object):
             f.write(stringy)
 
     def create_image(self, user, user_password, **args):
+        log.debug('Creating image:%s' % args)
         tenant = self.__find_project(args.pop('tenant_name', None))
         keystone = key_v2.Client(username=user.name,
                                  password=user_password,
@@ -157,11 +176,15 @@ class AccountSetup(object):
         image_endpoint = keystone.service_catalog.url_for(service_type='image')
         glance = glance_client('1', endpoint=image_endpoint, token=token)
         image_name = args.get('name', None)
-        if not self.__find_image(glance, image_name):
-            file_location = args.pop('file', None)
-            image = glance.images.create(**args)
-            if file_location:
-                image.update(data=open(file_location, 'rb'))
+        image = self.__find_image(glance, image_name)
+        if image:
+            log.info('Image exists:%s' % image)
+            return
+        file_location = args.pop('file', None)
+        image = glance.images.create(**args)
+        if file_location:
+            image.update(data=open(file_location, 'rb'))
+        log.info('Created image:%s' % image)
 
     def setup_config(self, config):
         user = self.create_user(**config['user'])
