@@ -121,13 +121,14 @@ class AccountSetup(object):
                               self.os_auth_url)
         try:
             group = nova.security_groups.create(**args)
+            group_id = group.id
         except nova_exceptions.BadRequest:
             # Group already exists
-            group = self.__find_sec_group(nova, args.pop('name', None))
-        log.info("Created security group:%s" % group)
+            group_id = self.__find_sec_group(nova, args.pop('name', None))
+        log.info("Created security group:%s" % group_id)
         for rule in rules:
             try:
-                nova.security_group_rules.create(group, **rule)
+                nova.security_group_rules.create(group_id, **rule)
             except nova_exceptions.BadRequest:
                 # Rule already exits
                 pass
