@@ -127,6 +127,19 @@ class AccountSetup(object):
             # Keypair already exists
             pass
 
+    def create_source_file(self, user, **args):
+        tenant = self.__find_project(args.pop('tenant_name', None))
+        stringy = '#!/bin/bash\n'
+        stringy += 'export OS_USERNAME="%s"\n' % user.name
+        stringy += 'export OS_TENANT_ID="%s"\n' % tenant.id
+        stringy += 'export OS_TENANT_NAME="%s"\n' % tenant.name
+        stringy += 'export OS_AUTH_URL="%s"\n' % self.os_auth_url
+        stringy += 'echo "Please enter your OpenStack Password:"\n'
+        stringy += 'read -s OS_PASSWORD_INPUT\n'
+        stringy += 'export OS_PASSWORD=$OS_PASSWORD_INPUT\n'
+        with open(args.pop('file', None), 'w+') as f:
+            f.write(stringy)
+
     def setup_config(self, config):
         print config
         user = self.create_user(**config['user'])
@@ -143,3 +156,5 @@ class AccountSetup(object):
             self.create_security_group(user, user_password, **group)
         for key in config['keypairs']:
             self.create_keypair(user, user_password, **key)
+        for source in config['source_files']:
+            self.create_source_file(user, **source)
