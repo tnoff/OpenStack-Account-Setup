@@ -1,4 +1,5 @@
 from cinderclient.v1 import client as cinder_v1
+from glanceclient import Client as glance_client
 from keystoneclient.v2_0 import client as key_v2
 from keystoneclient.openstack.common.apiclient import exceptions as keystone_exceptions
 from novaclient.v1_1 import client as nova_v1
@@ -54,6 +55,12 @@ class AccountSetup(object):
                                                         tenant=tenant.id)
             for _ in user_roles:
                 return tenant
+        return None
+
+    def __find_image(self, glance, name):
+        for im in glance.images.list():
+            if im.name == name:
+                return im
         return None
 
     def create_user(self, **args):
@@ -140,8 +147,23 @@ class AccountSetup(object):
         with open(args.pop('file', None), 'w+') as f:
             f.write(stringy)
 
+    def create_image(self, user, user_password, **args):
+        tenant = self.__find_project(args.pop('tenant_name', None))
+        keystone = key_v2.Client(username=user.name,
+                                 password=user_password,
+                                 tenant_name=tenant.name,
+                                 auth_url=self.os_auth_url)
+        token = keystone.auth_token
+        image_endpoint = keystone.service_catalog.url_for(service_type='image')
+        glance = glance_client('1', endpoint=image_endpoint, token=token)
+        image_name = args.get('name', None)
+        if not self.__find_image(glance, image_name):
+            file_location = args.pop('file', None)
+            image = glance.images.create(**args)
+            if file_location:
+                image.update(data=open(file_location, 'rb'))
+
     def setup_config(self, config):
-        print config
         user = self.create_user(**config['user'])
         user_password = config['user']['password']
         for project in config['projects']:
@@ -158,3 +180,5 @@ class AccountSetup(object):
             self.create_keypair(user, user_password, **key)
         for source in config['source_files']:
             self.create_source_file(user, **source)
+        for image in config['images']:
+            self.create_image(user, user_password, **image)
