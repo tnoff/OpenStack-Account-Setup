@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import AccountSetup
+from openstack_account import AccountSetup
 import argparse
 import os
 import sys
@@ -33,10 +33,10 @@ def get_env_args(args):
 def main():
     args = vars(parse_args())
     args = get_env_args(args)
-    a = AccountSetup.AccountSetup(args['username'],
-                                  args['password'],
-                                  args['tenant_name'],
-                                  args['auth_url'])
+    a = AccountSetup(args['username'],
+                     args['password'],
+                     args['tenant_name'],
+                     args['auth_url'])
     with open(args['config_file'], 'r') as f:
         data = yaml.load(f)
         for account in data:
