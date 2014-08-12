@@ -6,8 +6,6 @@ import logging
 from novaclient.v1_1 import client as nova_v1
 from novaclient import exceptions as nova_exceptions
 
-logging_format = '%(asctime)s--%(levelname)s--%(message)s'
-logging.basicConfig(format=logging_format)
 log = logging.getLogger(__name__)
 
 class AccountSetup(object):
@@ -187,21 +185,49 @@ class AccountSetup(object):
         log.info('Created image:%s' % image)
 
     def setup_config(self, config):
-        user = self.create_user(**config['user'])
-        user_password = config['user']['password']
-        for project in config['projects']:
-            self.create_project(user, **project)
-        for flavor in config['flavors']:
-            self.create_flavor(**flavor)
-        for quota in config['nova_quotas']:
-            self.set_nova_quota(**quota)
-        for quota in config['cinder_quotas']:
-            self.set_cinder_quota(**quota)
-        for group in config['security_groups']:
-            self.create_security_group(user, user_password, **group)
-        for key in config['keypairs']:
-            self.create_keypair(user, user_password, **key)
-        for source in config['source_files']:
-            self.create_source_file(user, **source)
-        for image in config['images']:
-            self.create_image(user, user_password, **image)
+        try:
+            user = self.create_user(**config['user'])
+            user_password = config['user']['password']
+        except KeyError:
+            log.error('No user in config, exiting')
+            return
+        try:
+            for project in config['projects']:
+                self.create_project(user, **project)
+        except KeyError:
+            log.debug('No projects in config')
+        try:
+            for flavor in config['flavors']:
+                self.create_flavor(**flavor)
+        except KeyError:
+            log.debug('No flavors in config')
+        try:
+            for quota in config['nova_quotas']:
+                self.set_nova_quota(**quota)
+        except KeyError:
+            log.debug('No nova quotas in config')
+        try:
+            for quota in config['cinder_quotas']:
+                self.set_cinder_quota(**quota)
+        except KeyError:
+            log.debug('No cinder quotas in config')
+        try:
+            for group in config['security_groups']:
+                self.create_security_group(user, user_password, **group)
+        except KeyError:
+            log.debug('No security group in config')
+        try:
+            for key in config['keypairs']:
+                self.create_keypair(user, user_password, **key)
+        except KeyError:
+            log.debug('No keypairs in config')
+        try:
+            for source in config['source_files']:
+                self.create_source_file(user, **source)
+        except KeyError:
+            log.debug('No source file in config')
+        try:
+            for image in config['images']:
+                self.create_image(user, user_password, **image)
+        except KeyError:
+            log.debug('No images in config')

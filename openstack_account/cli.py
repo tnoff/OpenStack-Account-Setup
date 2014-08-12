@@ -1,9 +1,19 @@
 #!/usr/bin/env python
 from openstack_account import AccountSetup
 import argparse
+import logging
 import os
 import sys
 import yaml
+
+log_format = '%(asctime)s-%(name)s-%(levelname)s-%(message)s'
+log = logging.getLogger('openstack_account')
+log.setLevel(logging.DEBUG)
+handle = logging.StreamHandler()
+handle.setLevel(logging.DEBUG)
+form = logging.Formatter(log_format)
+handle.setFormatter(form)
+log.addHandler(handle)
 
 def parse_args():
     p = argparse.ArgumentParser(description='Create & Setup OpenStack Accounts')
@@ -31,13 +41,16 @@ def get_env_args(args):
     return args
 
 def main():
+    log.debug('Reading CLI args')
     args = vars(parse_args())
     args = get_env_args(args)
+    log.debug('Initialzing Account Setup')
     a = AccountSetup(args['username'],
                      args['password'],
                      args['tenant_name'],
                      args['auth_url'])
     with open(args['config_file'], 'r') as f:
+        log.debug('Loading config from:%s' % args['config_file'])
         data = yaml.load(f)
         for account in data:
             a.setup_config(account)
