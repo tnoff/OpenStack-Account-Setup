@@ -1,12 +1,12 @@
 #!/usr/bin/env python
-from openstack_account import AccountSetup
+from __init__ import AccountSetup
 import argparse
 import logging
 import os
 import sys
 import yaml
 
-log_format = '%(asctime)s-%(name)s-%(levelname)s-%(message)s'
+log_format = '%(asctime)s-%(levelname)s-%(message)s'
 log = logging.getLogger('openstack_account')
 log.setLevel(logging.DEBUG)
 handle = logging.StreamHandler()
@@ -37,7 +37,8 @@ def get_env_args(args):
     must_have = ['username', 'password', 'tenant_name', 'auth_url']
     for item in must_have:
         if args[item] == None:
-            sys.exit("Don't have:%s, exiting" % item)
+            log.error('Need arg:%s' % item)
+            sys.exit('')
     return args
 
 def main():
