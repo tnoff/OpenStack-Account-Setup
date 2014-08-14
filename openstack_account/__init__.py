@@ -108,12 +108,17 @@ class AccountSetup(object):
             self.nova.flavors.create(**args)
         except nova_exceptions.Conflict:
             # Flavor already exists
-            pass
+            log.debug('Flavor already exists')
+        except TypeError, e:
+            log.error('Cannot create flavor:%s', e)
 
     def set_nova_quota(self, **args):
         log.info('Setting nova quotas:%s' % args)
         project = self.__find_project(args.pop('tenant_name', None))
-        self.nova.quotas.update(project.id, **args)
+        try:
+            self.nova.quotas.update(project.id, **args)
+        except nova_exceptions.BadRequest, e:
+            log.error('Cannot set quotas:%s' % e)
 
     def set_cinder_quota(self, **args):
         log.info('Setting cinder quotas:%s' % args)
@@ -139,8 +144,9 @@ class AccountSetup(object):
             try:
                 nova.security_group_rules.create(group_id, **rule)
             except nova_exceptions.BadRequest:
-                # Rule already exits
-                pass
+                log.debug('Cannot create rule, already exists')
+            except nova_exceptions.CommandError, e:
+                log.error('Cannot create rule:%s' % e)
             log.info('Created security group rule:%s' % rule)
 
     def create_keypair(self, user, user_password, **args):
@@ -156,8 +162,7 @@ class AccountSetup(object):
         try:
             nova.keypairs.create(**args)
         except nova_exceptions.Conflict:
-            # Keypair already exists
-            pass
+            log.debug('Keypair already exists')
 
     def create_source_file(self, user, **args):
         log.info('Creating source file:%s' % args)
