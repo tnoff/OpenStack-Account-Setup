@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from __init__ import AccountSetup
+from openstack_account import AccountSetup
 import argparse
 import logging
 import os
