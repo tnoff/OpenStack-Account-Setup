@@ -139,6 +139,9 @@ class AccountSetup(object):
         except nova_exceptions.BadRequest:
             # Group already exists
             group_id = self.__find_sec_group(nova, args.pop('name', None))
+        except nova_exceptions.ClientException, e:
+            log.error('Cannot create security group:%s' % e)
+            return
         log.info("Created security group:%s" % group_id)
         for rule in rules:
             try:
