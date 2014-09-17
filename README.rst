@@ -41,7 +41,7 @@ Python Scripting
 
 .. code::
 
-    >>> from openstack_account import AccountSetup
+    >>> from openstack_account.client import AccountSetup
     >>> help(AccountSetup)
 
 Sample Config
