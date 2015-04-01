@@ -1,11 +1,12 @@
 from cinderclient.v1 import client as cinder_v1
 from glanceclient import Client as glance_client
-from jsonschema import validate
 from keystoneclient.v2_0 import client as key_v2
 from keystoneclient.openstack.common.apiclient import exceptions as keystone_exceptions
-import logging
 from novaclient.v1_1 import client as nova_v1
 from novaclient import exceptions as nova_exceptions
+
+from jsonschema import validate
+import logging
 import os
 import yaml
 
