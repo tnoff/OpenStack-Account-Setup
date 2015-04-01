@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import setuptools
 
-VERSION = '0.4'
+VERSION = '0.5'
 
 setuptools.setup(
     author='Tyler Daniel North',
@@ -12,7 +12,6 @@ setuptools.setup(
         'python-glanceclient >= 0.13.1',
         'python-keystoneclient >= 0.10.1',
         'python-novaclient >= 2.18.1',
-        'PyYAML >= 3.11',
     ],
     entry_points={
         'console_scripts' : [
@@ -22,9 +21,6 @@ setuptools.setup(
     packages=[
         'openstack_account'
     ],
-    package_data={
-        'openstack_account' : ['schema.yml'],
-    },
     name='openstack_account',
     version=VERSION,
 )
