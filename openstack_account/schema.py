@@ -1,7 +1,4 @@
 SCHEMA = {
-    "required": [
-        "user"
-    ],
     "type": "object",
     "properties": {
         "flavors": {
@@ -56,6 +53,12 @@ SCHEMA = {
                 "type": "object",
                 "properties": {
                     "name": {
+                        "type": "string"
+                    },
+                    "user": {
+                        "type": "string"
+                    },
+                    "user_password": {
                         "type": "string"
                     },
                     "file": {
@@ -131,36 +134,43 @@ SCHEMA = {
             "type": "array",
             "title": "security_groups"
         },
-        "user": {
-            "required": [
-                "name",
-                "password"
-            ],
-            "type": "object",
-            "properties": {
-                "password": {
-                    "type": "string"
+        "users": {
+            "items": {
+                "required": [
+                    "name",
+                    "password"
+                ],
+                "type": "object",
+                "properties": {
+                    "password": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
                 },
-                "name": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": [
-                        "string",
-                        "null"
-                    ]
-                }
             },
+            "type": "array",
             "title": "user"
         },
         "source_files": {
             "items": {
                 "required": [
                     "tenant_name",
-                    "file"
+                    "file",
+                    "user"
                 ],
                 "type": "object",
                 "properties": {
+                    "user": {
+                        "type": "string"
+                    },
                     "tenant_name": {
                         "type": "string"
                     },
@@ -209,6 +219,9 @@ SCHEMA = {
                 "type": "object",
                 "properties": {
                     "role": {
+                        "type": "string"
+                    },
+                    "user": {
                         "type": "string"
                     },
                     "name": {

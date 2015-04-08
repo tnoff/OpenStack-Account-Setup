@@ -1,21 +1,14 @@
 ---
-# One account per keystone user
-# Multiple accounts can be made per config file
-
-# Name here not used, will simply iterate through list
-# Name will be printed when running program
-- user:
-        name: 'arya'
-        password: 'joffrey_sucks'
-        email: None
-
+- users:
+    - name: 'arya'
+      password: 'joffrey_sucks'
+      email: None
 
   projects:
-    # Name here not used, will simply iterate through list
-    # Name will be printed when running program
     - name: 'winterfell'
       description: 'winter is coming'
       role: '_member_'
+      user: 'arya'
 
 # Flavors will be made public for everyone
   flavors:
@@ -53,10 +46,14 @@
   keypairs:
     - name: 'my-public-key'
       file: '/home/user/.ssh/id_rsa.pub'
+      # If no username of password specified, will use local auth instead
+      user: 'arya'
+      user_password: 'joffrey_sucks'
 
   source_files:
     - tenant_name: 'winterfell'
       file: '/home/user/arya_openrc.sh'
+      user: 'arya'
 
   images:
     - tenant_name: 'winterfell'
