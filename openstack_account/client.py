@@ -274,6 +274,7 @@ class AccountSetup(object):
     def create_source_file(self, **args):
         log.info('Creating source file:%s' % args)
         tenant = self.__find_project(args.pop('tenant_name', None))
+        file_name = args.pop('file', None)
         user = args.pop('user', None)
         stringy = '#!/bin/bash\n'
         stringy += 'export OS_USERNAME="%s"\n' % user
@@ -283,8 +284,9 @@ class AccountSetup(object):
         stringy += 'echo "Please enter your OpenStack Password:"\n'
         stringy += 'read -s OS_PASSWORD_INPUT\n'
         stringy += 'export OS_PASSWORD=$OS_PASSWORD_INPUT\n'
-        with open(args.pop('file', None), 'w+') as f:
+        with open(file_name, 'w') as f:
             f.write(stringy)
+        log.debug('Created source file:%s' % file_name)
 
     def create_image(self, **args):
         log.debug('Creating image:%s' % args)
