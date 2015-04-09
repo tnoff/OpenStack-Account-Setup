@@ -288,7 +288,7 @@ class AccountSetup(object):
             image_name = args.get('name', None)
             image = self.__find_image(glance, image_name)
             if image:
-                log.info('Image exists:%s' % image)
+                log.info('Image exists:%s' % image.id)
                 return
             file_location = args.pop('file', None)
             image = glance.images.create(**args)
