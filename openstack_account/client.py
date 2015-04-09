@@ -12,8 +12,10 @@ from jsonschema import validate
 import logging
 import random
 import string
+import time
 
 log = logging.getLogger(__name__)
+
 SECTION_SCHEMA = {
     'users' : 'create_user',
     'projects':  'create_project',
@@ -25,6 +27,9 @@ SECTION_SCHEMA = {
     'source_files' : 'create_source_file',
     'images' : 'create_image',
 }
+
+WAIT_INTERVAL = 5
+WAIT_TIMEOUT = 3600
 
 class AccountSetup(object):
     def __init__(self, username, password, tenant_name, auth_url):
@@ -51,6 +56,21 @@ class AccountSetup(object):
         chars = string.ascii_lowercase + string.digits
         s = ''.join(random.choice(chars) for _ in range(length))
         return prefix + s
+
+    def __wait_status(self, function, obj_id, accept_states, reject_states,
+                      interval, timeout):
+        interval = interval or WAIT_INTERVAL
+        timeout = timeout or WAIT_TIMEOUT
+        obj = function(obj_id)
+        expires = time.time() + timeout
+        while time.time() <= expires:
+            if obj.status in accept_states:
+                return True
+            if obj.status in reject_states:
+                return False
+            time.sleep(interval)
+            obj = function(obj_id)
+        return False
 
     @contextmanager
     def __temp_user(self, tenant):
@@ -236,6 +256,9 @@ class AccountSetup(object):
     def create_image(self, **args):
         log.debug('Creating image:%s' % args)
         tenant = self.__find_project(args.pop('tenant_name', None))
+        wait = args.pop('wait', None)
+        timeout = args.pop('timeout', None)
+        interval = args.pop('wait_interval', None)
         with self.__temp_user(tenant) as (user, user_password):
             keystone = key_v2.Client(username=user.name,
                                      password=user_password,
@@ -254,6 +277,10 @@ class AccountSetup(object):
             if file_location:
                 image.update(data=open(file_location, 'rb'))
             log.info('Created image:%s' % image)
+            if wait:
+                log.info('Waiting for image:%s' % image.id)
+                self.__wait_status(glance.images.get, image.id, ['active'],
+                                   ['error'], interval, timeout)
 
     def setup_config(self, config):
         log.debug('Checking schema')

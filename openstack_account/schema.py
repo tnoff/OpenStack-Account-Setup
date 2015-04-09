@@ -204,6 +204,15 @@ SCHEMA = {
                     },
                     "container_format": {
                         "type": "string"
+                    },
+                    "wait": {
+                        "type": "boolean"
+                    },
+                    "timeout": {
+                        "type": "integer"
+                    },
+                    "wait_interval": {
+                        "type": "integer"
                     }
                 },
                 "title": "image"

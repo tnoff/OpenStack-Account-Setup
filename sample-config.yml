@@ -70,3 +70,6 @@
       container_format: 'bare'
       disk_format: 'qcow2'
       is_public: False
+      # Wait until image is active
+      wait: True
+      timeout: 1200
