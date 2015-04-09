@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import setuptools
 
-VERSION = '0.7'
+VERSION = '0.8'
 
 setuptools.setup(
     author='Tyler Daniel North',
@@ -11,6 +11,7 @@ setuptools.setup(
         'python-cinderclient >= 1.0.9',
         'python-glanceclient >= 0.13.1',
         'python-keystoneclient >= 0.10.1',
+        'python-neutronclient>=2.3.11',
         'python-novaclient >= 2.18.1',
     ],
     entry_points={
