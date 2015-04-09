@@ -149,8 +149,7 @@ class AccountSetup(object):
         user = self.__find_user(args.pop('user', None))
 
         try:
-            self.keystone.tenants.create(**args)
-            project = self.__find_project(args['tenant_name'] or  None)
+            project = self.keystone.tenants.create(**args)
         except keystone_exceptions.Conflict:
             project = self.__find_project(args['tenant_name'] or None)
         if user and role:
@@ -162,7 +161,7 @@ class AccountSetup(object):
                 # Role already exists
                 log.debug('Role exits user:%s to project:%s with role:%s' %
                           (user.id, project.id, role.id))
-        log.info('Projected created:%s' % project)
+        log.info('Project created:%s' % project.id)
 
     def create_flavor(self, **args):
         log.info('Creating flavor:%s' % args)
@@ -212,22 +211,23 @@ class AccountSetup(object):
             log.info("Created security group:%s" % group_id)
             for rule in rules:
                 try:
-                    nova.security_group_rules.create(group_id, **rule)
+                    r = nova.security_group_rules.create(group_id, **rule)
                 except nova_exceptions.BadRequest:
                     log.debug('Cannot create rule, already exists')
+                    continue
                 except nova_exceptions.CommandError, e:
                     log.error('Cannot create rule:%s' % e)
-                log.info('Created security group rule:%s' % rule)
+                    continue
+                log.info('Created security group rule:%s' % r['id'])
 
     def create_keypair(self, **args):
         log.info('Creating keypair:%s' % args)
         user = self.__find_user(args.pop('user', None))
-        user_password = args.pop('user_password', None)
         tenant = self.__find_valid_project(user)
         nova = self.nova
         if user:
-            nova = nova_v1.Client(user.name,
-                                  user_password,
+            nova = nova_v1.Client(user['name'],
+                                  user['password'],
                                   tenant.name,
                                   self.os_auth_url)
         if args['file']:
@@ -235,6 +235,7 @@ class AccountSetup(object):
                 args['public_key'] = f.read()
         try:
             nova.keypairs.create(**args)
+            log.debug('Created keypair:%s' % args['name'])
         except nova_exceptions.Conflict:
             log.debug('Keypair already exists')
 
@@ -276,7 +277,7 @@ class AccountSetup(object):
             image = glance.images.create(**args)
             if file_location:
                 image.update(data=open(file_location, 'rb'))
-            log.info('Created image:%s' % image)
+            log.info('Created image:%s' % image.id)
             if wait:
                 log.info('Waiting for image:%s' % image.id)
                 self.__wait_status(glance.images.get, image.id, ['active'],

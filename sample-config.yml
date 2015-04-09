@@ -54,8 +54,9 @@
     - name: 'my-public-key'
       file: '/home/user/.ssh/id_rsa.pub'
       # If no username or password specified, will use local auth instead
-      user: 'arya'
-      user_password: 'joffrey_sucks'
+      user:
+        name: 'arya'
+        password: 'joffrey_sucks'
 
 - source_files:
     - tenant_name: 'winterfell'

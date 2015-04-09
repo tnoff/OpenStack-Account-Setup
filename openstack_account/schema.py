@@ -56,10 +56,16 @@ SCHEMA = {
                         "type": "string"
                     },
                     "user": {
-                        "type": "string"
-                    },
-                    "user_password": {
-                        "type": "string"
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "type" : "string"
+                            },
+                            "password": {
+                                "type" : "string"
+                            }
+                        },
+                        "required": ["name", "password"]
                     },
                     "file": {
                         "type": "string"
