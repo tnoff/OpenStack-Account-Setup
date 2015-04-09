@@ -86,7 +86,7 @@ SCHEMA = {
             "type": "array",
             "title": "cinder_quotas"
         },
-        "security_grups": {
+        "security_groups": {
             "items": {
                 "required": [
                     "name",
@@ -237,5 +237,6 @@ SCHEMA = {
             "title": "projects"
         }
     },
+    "additionalProperties": False,
     "title": "Account Setup Schema"
 }

@@ -52,10 +52,10 @@ def main():
                      args['tenant_name'],
                      args['auth_url'])
     with open(args['config_file'], 'r') as f:
-        log.debug('Loading config from:%s' % args['config_file'])
-        data = yaml.load(f)
-        for account in data:
-            a.setup_config(account)
+        log.debug('Loading configs from:%s' % args['config_file'])
+        config_data = yaml.load(f)
+        for item in config_data:
+            a.setup_config(item)
 
 if __name__ == '__main__':
     main()

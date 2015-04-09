@@ -14,6 +14,17 @@ import random
 import string
 
 log = logging.getLogger(__name__)
+SECTION_SCHEMA = {
+    'users' : 'create_user',
+    'projects':  'create_project',
+    'flavors' : 'create_flavor',
+    'nova_quotas' : 'set_nova_quota',
+    'cinder_quotas' : 'set_cinder_quota',
+    'security_groups' : 'create_security_group',
+    'keypairs' : 'create_keypair',
+    'source_files' : 'create_source_file',
+    'images' : 'create_image',
+}
 
 class AccountSetup(object):
     def __init__(self, username, password, tenant_name, auth_url):
@@ -86,6 +97,8 @@ class AccountSetup(object):
         return None
 
     def __find_valid_project(self, user):
+        if not user:
+            return None
         for tenant in self.keystone.tenants.list():
             user_roles = self.keystone.users.list_roles(user.id,
                                                         tenant=tenant.id)
@@ -143,7 +156,11 @@ class AccountSetup(object):
 
     def set_nova_quota(self, **args):
         log.info('Setting nova quotas:%s' % args)
-        project = self.__find_project(args.pop('tenant_name', None))
+        tenant_name = args.pop('tenant_name', None)
+        project = self.__find_project(tenant_name)
+        if not project:
+            log.error('Cannot find project:%s' % tenant_name)
+            return
         try:
             self.nova.quotas.update(project.id, **args)
         except nova_exceptions.BadRequest, e:
@@ -241,48 +258,7 @@ class AccountSetup(object):
     def setup_config(self, config):
         log.debug('Checking schema')
         validate(config, schema.SCHEMA)
-        try:
-            for user in config['user']:
-                self.create_user(**user)
-        except KeyError:
-            log.error('No user in config, exiting')
-        try:
-            for project in config['projects']:
-                self.create_project(**project)
-        except KeyError:
-            log.debug('No projects in config')
-        try:
-            for flavor in config['flavors']:
-                self.create_flavor(**flavor)
-        except KeyError:
-            log.debug('No flavors in config')
-        try:
-            for quota in config['nova_quotas']:
-                self.set_nova_quota(**quota)
-        except KeyError:
-            log.debug('No nova quotas in config')
-        try:
-            for quota in config['cinder_quotas']:
-                self.set_cinder_quota(**quota)
-        except KeyError:
-            log.debug('No cinder quotas in config')
-        try:
-            for group in config['security_groups']:
-                self.create_security_group(**group)
-        except KeyError:
-            log.debug('No security group in config')
-        try:
-            for key in config['keypairs']:
-                self.create_keypair(**key)
-        except KeyError:
-            log.debug('No keypairs in config')
-        try:
-            for source in config['source_files']:
-                self.create_source_file(**source)
-        except KeyError:
-            log.debug('No source file in config')
-        try:
-            for image in config['images']:
-                self.create_image(**image)
-        except KeyError:
-            log.debug('No images in config')
+        for section in config.keys():
+            for item in config[section]:
+                method = getattr(self, SECTION_SCHEMA[section])
+                method(**item)

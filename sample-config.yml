@@ -1,23 +1,30 @@
 ---
+# Place list of actions to complete, they will be done in order
+# You can place multiple items in an action, they will be done in random
+#  order
 - users:
+    # These users will be created in a random order
     - name: 'arya'
       password: 'joffrey_sucks'
       email: None
 
-  projects:
+    - name: 'gentry'
+      password: 'mah_helm'
+      email: None
+
+- projects:
     - name: 'winterfell'
       description: 'winter is coming'
       role: '_member_'
       user: 'arya'
 
-# Flavors will be made public for everyone
-  flavors:
+- flavors:
     - name: 'biggie smalls'
       ram: 4096
       vcpus: 4
       disk: 0
 
-  nova_quotas:
+- nova_quotas:
     # Will find tenant by name
     # Any valid arg can be used here
     # All keys (besides tenant name) passed directly into the query
@@ -25,7 +32,7 @@
     - tenant_name: 'winterfell'
       instances: 20
 
-  cinder_quotas:
+- cinder_quotas:
     # Will find tenant by name
     # Any valid arg can be used here
     # All keys (besides tenant name) passed directly into the query
@@ -33,7 +40,7 @@
     - tenant_name: 'winterfell'
       volumes: 20
 
-  security_groups:
+- security_groups:
     - name: 'ssh port'
       description: Simply ssh port group
       tenant_name: 'winterfell'
@@ -43,19 +50,19 @@
           ip_protocol: 'tcp'
           cidr: '0.0.0.0/0'
 
-  keypairs:
+- keypairs:
     - name: 'my-public-key'
       file: '/home/user/.ssh/id_rsa.pub'
-      # If no username of password specified, will use local auth instead
+      # If no username or password specified, will use local auth instead
       user: 'arya'
       user_password: 'joffrey_sucks'
 
-  source_files:
+- source_files:
     - tenant_name: 'winterfell'
       file: '/home/user/arya_openrc.sh'
       user: 'arya'
 
-  images:
+- images:
     - tenant_name: 'winterfell'
       # Whether 'file' (uploaded from local file) or 'copy_from' (copied from URL) can be set
       copy_from: 'http://www.change-me.org/debian-7.3.img'
