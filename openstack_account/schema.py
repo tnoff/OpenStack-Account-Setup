@@ -308,6 +308,29 @@ SCHEMA = {
                     "additionalProperties" : True
                 }
             }
+        },
+        "routers": {
+            "title": "routers",
+            "type": "array",
+            "items": {
+                "title": "router",
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "external_network": {
+                        "type": "string"
+                    },
+                    "internal_subnet": {
+                        "type": "string"
+                    },
+                    "tenant_name": {
+                        "type": "string"
+                    }
+                },
+                "requires": ["name"]
+            }
         }
     }
 }

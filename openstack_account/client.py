@@ -30,6 +30,7 @@ SECTION_SCHEMA = {
     'images' : 'create_image',
     'networks' : 'create_network',
     'subnets' : 'create_subnet',
+    'routers' : 'create_router',
 }
 
 WAIT_INTERVAL = 5
@@ -162,6 +163,16 @@ class AccountSetup(object):
                         return sub
                 else:
                     return sub
+        return None
+
+    def __find_router(self, neutron, name, tenant_id):
+        for router in neutron.list_routers()['routers']:
+            if router['name'] == name:
+                if tenant_id:
+                    if tenant_id == router['tenant_id']:
+                        return router
+                else:
+                    return router
         return None
 
     def create_user(self, **args):
@@ -348,6 +359,36 @@ class AccountSetup(object):
             log.error('Cannot create subnet:%s' % str(e))
             return
         log.debug('Created subnet:%s' % subnet['subnet']['id'])
+
+    def create_router(self, **args):
+        log.debug('Create router:%s' % args)
+        tenant = self.__find_project(args.pop('tenant_name', None))
+        if tenant:
+            args['tenant_id'] = tenant.id
+        router = self.__find_router(self.neutron, args['name'], None)
+        external = self.__find_network(self.neutron,
+                                       args.pop('external_network', None),
+                                       None)
+        internal = self.__find_subnet(self.neutron,
+                                      args.pop('internal_subnet', None),
+                                      None, None)
+        if router:
+            log.debug('Router already exists:%s' % router['id'])
+        else:
+            router = self.neutron.create_router({'router' : args})['router']
+            log.debug('Created router:%s' % router['id'])
+
+        if external:
+            data = {'network_id' : external['id']}
+            self.neutron.add_gateway_router(router['id'],
+                                            data)
+            log.debug('Set external network:%s for router:%s' % (external['id'],
+                                                                 router['id']))
+        if internal:
+            data = {'subnet_id' : internal['id']}
+            self.neutron.add_interface_router(router['id'], data)
+            log.debug('Set internal subnet:%s for router:%s' % (internal['id'],
+                                                                router['id']))
 
     def setup_config(self, config):
         log.debug('Checking schema')

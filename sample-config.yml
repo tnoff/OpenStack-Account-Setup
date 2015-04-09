@@ -3,6 +3,8 @@
 # Each action will need at least one valid section
 # Sections in each action will be done in a random order
 # Each section can have a list of items that will be created in order
+
+
 # action
 - users: # section
     - name: 'arya' # item
@@ -70,6 +72,12 @@
       tenant_name: 'winterfell'
       cidr: '192.168.0.0/24'
       ip_version: '4'
+
+- routers:
+    - name: 'the kingsroad'
+      tenant_name: 'winterfell'
+      external_network: 'external'
+      internal_subnet: 'moat cailin'
 
 - source_files:
     - tenant_name: 'winterfell'
