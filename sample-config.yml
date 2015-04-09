@@ -58,6 +58,11 @@
         name: 'arya'
         password: 'joffrey_sucks'
 
+- networks:
+    - name: 'the north'
+      tenant_name: 'winterfell'
+      shared: True
+
 - source_files:
     - tenant_name: 'winterfell'
       file: '/home/user/arya_openrc.sh'

@@ -4,6 +4,7 @@ from cinderclient.v1 import client as cinder_v1
 from glanceclient import Client as glance_client
 from keystoneclient.v2_0 import client as key_v2
 from keystoneclient.openstack.common.apiclient import exceptions as keystone_exceptions
+from neutronclient.v2_0 import client as neutron_v2
 from novaclient.v1_1 import client as nova_v1
 from novaclient import exceptions as nova_exceptions
 
@@ -26,6 +27,7 @@ SECTION_SCHEMA = {
     'keypairs' : 'create_keypair',
     'source_files' : 'create_source_file',
     'images' : 'create_image',
+    'networks' : 'create_network',
 }
 
 WAIT_INTERVAL = 5
@@ -51,6 +53,11 @@ class AccountSetup(object):
                                        password,
                                        tenant_name,
                                        auth_url)
+        self.neutron = neutron_v2.Client(username=username,
+                                         password=password,
+                                         tenant_name=tenant_name,
+                                         auth_url=auth_url)
+
 
     def __random_string(self, prefix='', length=20):
         chars = string.ascii_lowercase + string.digits
@@ -130,6 +137,16 @@ class AccountSetup(object):
         for im in glance.images.list():
             if im.name == name:
                 return im
+        return None
+
+    def __find_network(self, neutron, name, tenant_id):
+        for net in neutron.list_networks()['networks']:
+            if net['name'] == name:
+                if tenant_id:
+                    if tenant_id == net['tenant_id']:
+                        return net
+                else:
+                    return net
         return None
 
     def create_user(self, **args):
@@ -282,6 +299,18 @@ class AccountSetup(object):
                 log.info('Waiting for image:%s' % image.id)
                 self.__wait_status(glance.images.get, image.id, ['active'],
                                    ['error'], interval, timeout)
+
+    def create_network(self, **args):
+        log.debug('Creating network:%s' % args)
+        tenant = self.__find_project(args.pop('tenant_name', None))
+        net = self.__find_network(self.neutron, args['name'], tenant.id)
+        if net:
+            log.debug('Network already exists:%s' % net['id'])
+            return
+        if tenant:
+            args['tenant_id'] = tenant.id
+        network = self.neutron.create_network({'network' : args})
+        log.debug('Created network:%s' % network['network']['id'])
 
     def setup_config(self, config):
         log.debug('Checking schema')

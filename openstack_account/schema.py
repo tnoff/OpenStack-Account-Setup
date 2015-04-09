@@ -250,6 +250,23 @@ SCHEMA = {
             },
             "type": "array",
             "title": "projects"
+        },
+        "networks": {
+            "title": "networks",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "tenant_name": {
+                        "type": "string"
+                    }
+                },
+                "required": ["name"],
+                "title": "network"
+            }
         }
     },
     "additionalProperties": False,
