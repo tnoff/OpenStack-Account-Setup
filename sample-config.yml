@@ -19,7 +19,7 @@
       user: 'arya'
 
 - flavors:
-    - name: 'biggie smalls'
+    - name: 'kraken'
       ram: 4096
       vcpus: 4
       disk: 0
