@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import setuptools
 
-VERSION = '0.5'
+VERSION = '0.6'
 
 setuptools.setup(
     author='Tyler Daniel North',
