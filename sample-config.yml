@@ -1,10 +1,11 @@
 ---
 # Place list of actions to complete, they will be done in order
-# You can place multiple items in an action, they will be done in random
-#  order
-- users:
-    # These users will be created in a random order
-    - name: 'arya'
+# Each action will need at least one valid section
+# Sections in each action will be done in a random order
+# Each section can have a list of items that will be created in order
+# action
+- users: # section
+    - name: 'arya' # item
       password: 'joffrey_sucks'
       email: None
 

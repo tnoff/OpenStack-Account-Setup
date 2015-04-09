@@ -54,8 +54,7 @@ def main():
     with open(args['config_file'], 'r') as f:
         log.debug('Loading configs from:%s' % args['config_file'])
         config_data = yaml.load(f)
-        for item in config_data:
-            a.setup_config(item)
+        a.setup_config(config_data)
 
 if __name__ == '__main__':
     main()

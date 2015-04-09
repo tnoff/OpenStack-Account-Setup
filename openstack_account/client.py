@@ -352,7 +352,11 @@ class AccountSetup(object):
     def setup_config(self, config):
         log.debug('Checking schema')
         validate(config, schema.SCHEMA)
-        for section in config.keys():
-            for item in config[section]:
-                method = getattr(self, SECTION_SCHEMA[section])
-                method(**item)
+        for action in config:
+            # For each item listed
+            for section in action.keys():
+                # Do sections randomly
+                for item in action[section]:
+                    # For item in section
+                    method = getattr(self, SECTION_SCHEMA[section])
+                    method(**item)
