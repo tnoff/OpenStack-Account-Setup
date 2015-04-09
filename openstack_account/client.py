@@ -250,7 +250,7 @@ class AccountSetup(object):
                 except nova_exceptions.CommandError, e:
                     log.error('Cannot create rule:%s' % e)
                     continue
-                log.info('Created security group rule:%s' % r['id'])
+                log.info('Created security group rule:%s' % r)
 
     def create_keypair(self, **args):
         log.info('Creating keypair:%s' % args)
