@@ -28,7 +28,8 @@ SCHEMA = {
                     "disk",
                     "vcpus",
                     "ram"
-                ]
+                ],
+                "additionalProperties" : True
             }
         },
         "nova_quotas": {
@@ -43,6 +44,7 @@ SCHEMA = {
                     }
                 },
                 "required": ["tenant_name"],
+                "additionalProperties" : True
             }
         },
         "keypairs": {
@@ -86,7 +88,8 @@ SCHEMA = {
                         "type": "string"
                     }
                 },
-                "required": ["tenant_name"]
+                "required": ["tenant_name"],
+                "additionalProperties" : True
             }
         },
         "security_groups": {
@@ -128,7 +131,8 @@ SCHEMA = {
                         "type": ["string", "null"]
                     }
                 },
-                "required": ["name", "description", "tenant_name"]
+                "required": ["name", "description", "tenant_name"],
+                "additionalProperties" : True
             }
         },
         "users": {
@@ -205,7 +209,8 @@ SCHEMA = {
                     "disk_format",
                     "container_format",
                     "name"
-                ]
+                ],
+                "additionalProperties" : True
             },
         },
         "projects": {
@@ -245,7 +250,8 @@ SCHEMA = {
                         "type": "string"
                     }
                 },
-                "required": ["name"]
+                "required": ["name"],
+                "additionalProperties" : True
             }
         },
         "subnets": {
@@ -271,7 +277,8 @@ SCHEMA = {
                         "type": "string"
                     }
                 },
-                "required": ["name", "network", "cidr", "ip_version"]
+                "required": ["name", "network", "cidr", "ip_version"],
+                "additionalProperties" : True
             }
         }
     }
