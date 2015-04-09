@@ -1,14 +1,13 @@
 SCHEMA = {
     "type": "object",
+    "additionalProperties": False,
+    "title": "Account Setup Schema",
     "properties": {
         "flavors": {
+            "title": "flavors",
+            "type": "array",
             "items": {
-                "required": [
-                    "name",
-                    "disk",
-                    "vcpus",
-                    "ram"
-                ],
+                "title": "flavor",
                 "type": "object",
                 "properties": {
                     "vcpus": {
@@ -24,38 +23,40 @@ SCHEMA = {
                         "type": "string"
                     }
                 },
-                "title": "flavor"
-            },
-            "type": "array",
-            "title": "flavors"
+                "required": [
+                    "name",
+                    "disk",
+                    "vcpus",
+                    "ram"
+                ]
+            }
         },
         "nova_quotas": {
+            "title": "nova_quotas",
+            "type": "array",
             "items": {
-                "required": [
-                    "tenant_name"
-                ],
+                "title": "nova_quota",
                 "type": "object",
                 "properties": {
                     "tenant_name": {
                         "type": "string"
                     }
                 },
-                "title": "nova_quota"
-            },
-            "type": "array",
-            "title": "nova_quotas"
+                "required": ["tenant_name"],
+            }
         },
         "keypairs": {
+            "title": "keypairs",
+            "type": "array",
             "items": {
-                "required": [
-                    "name"
-                ],
+                "title": "keypair",
                 "type": "object",
                 "properties": {
                     "name": {
                         "type": "string"
                     },
                     "user": {
+                        "title": "user",
                         "type": "object",
                         "properties": {
                             "name": {
@@ -71,38 +72,35 @@ SCHEMA = {
                         "type": "string"
                     }
                 },
-                "title": "keypair"
-            },
-            "type": "array",
-            "title": "keypairs"
+                "required": ["name"]
+            }
         },
         "cinder_quotas": {
+            "title": "cinder_quotas",
+            "type": "array",
             "items": {
-                "required": [
-                    "tenant_name"
-                ],
+                "title": "cinder_quota",
                 "type": "object",
                 "properties": {
                     "tenant_name": {
                         "type": "string"
                     }
                 },
-                "title": "cinder_quota"
-            },
-            "type": "array",
-            "title": "cinder_quotas"
+                "required": ["tenant_name"]
+            }
         },
         "security_groups": {
+            "title": "security_groups",
+            "type": "array",
             "items": {
-                "required": [
-                    "name",
-                    "description",
-                    "tenant_name"
-                ],
+                "title": "security_group",
                 "type": "object",
                 "properties": {
                     "rules": {
+                        "title": "rules",
+                        "type": "array",
                         "items": {
+                            "title": "rule",
                             "type": "object",
                             "properties": {
                                 "to_port": {
@@ -118,9 +116,7 @@ SCHEMA = {
                                     "type": "string"
                                 }
                             },
-                            "title": "rule"
                         },
-                        "type": "array"
                     },
                     "tenant_name": {
                         "type": "string"
@@ -129,23 +125,17 @@ SCHEMA = {
                         "type": "string"
                     },
                     "description": {
-                        "type": [
-                            "string",
-                            "null"
-                        ]
+                        "type": ["string", "null"]
                     }
                 },
-                "title": "security_group"
-            },
-            "type": "array",
-            "title": "security_groups"
+                "required": ["name", "description", "tenant_name"]
+            }
         },
         "users": {
+            "title": "users",
+            "type": "array",
             "items": {
-                "required": [
-                    "name",
-                    "password"
-                ],
+                "title": "user",
                 "type": "object",
                 "properties": {
                     "password": {
@@ -155,23 +145,17 @@ SCHEMA = {
                         "type": "string"
                     },
                     "email": {
-                        "type": [
-                            "string",
-                            "null"
-                        ]
+                        "type": ["string", "null"]
                     }
                 },
-            },
-            "type": "array",
-            "title": "user"
+                "required": ["name", "password"]
+            }
         },
         "source_files": {
+            "title": "source_files",
+            "type": "array",
             "items": {
-                "required": [
-                    "tenant_name",
-                    "file",
-                    "user"
-                ],
+                "title": "source_file",
                 "type": "object",
                 "properties": {
                     "user": {
@@ -184,19 +168,14 @@ SCHEMA = {
                         "type": "string"
                     }
                 },
-                "title": "source_file"
-            },
-            "type": "array",
-            "title": "source_files"
+                "required": ["tenant_name", "file", "user"]
+            }
         },
         "images": {
+            "type": "array",
+            "title": "images",
             "items": {
-                "required": [
-                    "tenant_name",
-                    "disk_format",
-                    "container_format",
-                    "name"
-                ],
+                "title": "image",
                 "type": "object",
                 "properties": {
                     "tenant_name": {
@@ -221,16 +200,19 @@ SCHEMA = {
                         "type": "integer"
                     }
                 },
-                "title": "image"
+                "required": [
+                    "tenant_name",
+                    "disk_format",
+                    "container_format",
+                    "name"
+                ]
             },
-            "type": "array",
-            "title": "images"
         },
         "projects": {
+            "title": "projects",
+            "type": "array",
             "items": {
-                "required": [
-                    "name"
-                ],
+                "title": "project",
                 "type": "object",
                 "properties": {
                     "role": {
@@ -246,15 +228,14 @@ SCHEMA = {
                         "type": "string"
                     }
                 },
-                "title": "project"
-            },
-            "type": "array",
-            "title": "projects"
+                "required": ["name"]
+            }
         },
         "networks": {
             "title": "networks",
             "type": "array",
             "items": {
+                "title": "network",
                 "type": "object",
                 "properties": {
                     "name": {
@@ -264,11 +245,8 @@ SCHEMA = {
                         "type": "string"
                     }
                 },
-                "required": ["name"],
-                "title": "network"
+                "required": ["name"]
             }
         }
-    },
-    "additionalProperties": False,
-    "title": "Account Setup Schema"
+    }
 }
