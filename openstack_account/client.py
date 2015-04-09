@@ -5,6 +5,7 @@ from glanceclient import Client as glance_client
 from keystoneclient.v2_0 import client as key_v2
 from keystoneclient.openstack.common.apiclient import exceptions as keystone_exceptions
 from neutronclient.v2_0 import client as neutron_v2
+from neutronclient.common import exceptions as neutron_exceptions
 from novaclient.v1_1 import client as nova_v1
 from novaclient import exceptions as nova_exceptions
 
@@ -28,6 +29,7 @@ SECTION_SCHEMA = {
     'source_files' : 'create_source_file',
     'images' : 'create_image',
     'networks' : 'create_network',
+    'subnets' : 'create_subnet',
 }
 
 WAIT_INTERVAL = 5
@@ -147,6 +149,19 @@ class AccountSetup(object):
                         return net
                 else:
                     return net
+        return None
+
+    def __find_subnet(self, neutron, name, tenant_id, network_id):
+        for sub in neutron.list_subnets()['subnets']:
+            if sub['name'] == name:
+                if network_id:
+                    if sub['network_id'] == network_id:
+                        return sub
+                elif tenant_id:
+                    if tenant_id == sub['tenant_id']:
+                        return sub
+                else:
+                    return sub
         return None
 
     def create_user(self, **args):
@@ -311,6 +326,26 @@ class AccountSetup(object):
             args['tenant_id'] = tenant.id
         network = self.neutron.create_network({'network' : args})
         log.debug('Created network:%s' % network['network']['id'])
+
+    def create_subnet(self, **args):
+        log.debug('Creating subnet:%s' % args)
+        tenant = self.__find_project(args.pop('tenant_name', None))
+        network = self.__find_network(self.neutron, args.pop('network', None),
+                                      tenant.id)
+        args['network_id'] = network['id']
+        sub = self.__find_subnet(self.neutron, args['name'], tenant.id,
+                                 network['id'])
+        if sub:
+            log.debug('Subnet already exists:%s' % sub['id'])
+            return
+        if tenant:
+            args['tenant_id'] = tenant.id
+        try:
+            subnet = self.neutron.create_subnet({"subnet" : args})
+        except neutron_exceptions.BadRequest, e:
+            log.error('Cannot create subnet:%s' % str(e))
+            return
+        log.debug('Created subnet:%s' % subnet['subnet']['id'])
 
     def setup_config(self, config):
         log.debug('Checking schema')

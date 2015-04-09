@@ -247,6 +247,32 @@ SCHEMA = {
                 },
                 "required": ["name"]
             }
+        },
+        "subnets": {
+            "title": "subnets",
+            "type": "array",
+            "items": {
+                "title": "subnet",
+                "type": "object",
+                "properties": {
+                    "name" : {
+                        "type": "string"
+                    },
+                    "network": {
+                        "type": "string"
+                    },
+                    "cidr": {
+                        "type": "string"
+                    },
+                    "ip_version": {
+                        "type": "string"
+                    },
+                    "tenant_name": {
+                        "type": "string"
+                    }
+                },
+                "required": ["name", "network", "cidr", "ip_version"]
+            }
         }
     }
 }

@@ -63,6 +63,13 @@
       tenant_name: 'winterfell'
       shared: True
 
+- subnets:
+    - name: 'moat cailin'
+      network: 'the north'
+      tenant_name: 'winterfell'
+      cidr: '192.168.0.0/24'
+      ip_version: '4'
+
 - source_files:
     - tenant_name: 'winterfell'
       file: '/home/user/arya_openrc.sh'
