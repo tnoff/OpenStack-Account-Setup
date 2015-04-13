@@ -79,6 +79,7 @@
 - images:
     - tenant_name: 'winterfell'
       # Whether 'file' (uploaded from local file) or 'copy_from' (copied from URL) can be set
+      name: 'Debian 7.3'
       copy_from: 'http://www.change-me.org/debian-7.3.img'
       # file: '/home/user/images/debian-7.3.img'
       container_format: 'bare'
