@@ -6,6 +6,18 @@ SCHEMA = {
         "type": "object",
         "additionalProperties": False,
         "properties": {
+            "os_username": {
+                "type": "string"
+            },
+            "os_password": {
+                "type": "string"
+            },
+            "os_tenant_name": {
+                "type": "string"
+            },
+            "os_auth_url": {
+                "type": "string"
+            },
             "flavors": {
                 "title": "flavors",
                 "type": "array",

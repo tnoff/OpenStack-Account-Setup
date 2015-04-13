@@ -32,18 +32,30 @@ SECTION_SCHEMA = {
     'subnets' : 'create_subnet',
     'routers' : 'create_router',
 }
-
+SECTION_IGNORE = [
+    'os_username',
+    'os_password',
+    'os_tenant_name',
+    'os_auth_url',
+]
 WAIT_INTERVAL = 5
 WAIT_TIMEOUT = 3600
 
 class AccountSetup(object):
     def __init__(self, username, password, tenant_name, auth_url):
-        log.debug('Creating Account Setup Object')
         self.os_username = username
         self.os_password = password
         self.os_tenant_name = tenant_name
         self.os_auth_url = auth_url
+        self.keystone = None
+        self.nova = None
+        self.cinder = None
+        self.neutron = None
+        self.glance = None
+        self.__reset_clients(self.os_username, self.os_password,
+                             self.os_tenant_name, self.os_auth_url)
 
+    def __reset_clients(self, username, password, tenant_name, auth_url):
         self.keystone = key_v2.Client(username=username,
                                       password=password,
                                       tenant_name=tenant_name,
@@ -60,6 +72,9 @@ class AccountSetup(object):
                                          password=password,
                                          tenant_name=tenant_name,
                                          auth_url=auth_url)
+        token = self.keystone.auth_token
+        image_endpoint = self.keystone.service_catalog.url_for(service_type='image')
+        self.glance = glance_client('1', endpoint=image_endpoint, token=token)
 
 
     def __random_string(self, prefix='', length=20):
@@ -136,16 +151,6 @@ class AccountSetup(object):
         for group in nova.security_groups.list():
             if group.name == name:
                 return group.id
-        return None
-
-    def __find_valid_project(self, user):
-        if not user:
-            return None
-        for tenant in self.keystone.tenants.list():
-            user_roles = self.keystone.users.list_roles(user.id,
-                                                        tenant=tenant.id)
-            for _ in user_roles:
-                return tenant
         return None
 
     def __find_image(self, glance, name):
@@ -287,14 +292,7 @@ class AccountSetup(object):
 
     def create_keypair(self, **args):
         log.info('Creating keypair:%s' % args)
-        user = self.__find_user(args.pop('user', None))
-        tenant = self.__find_valid_project(user)
         nova = self.nova
-        if user:
-            nova = nova_v1.Client(user['name'],
-                                  user['password'],
-                                  tenant.name,
-                                  self.os_auth_url)
         if args['file']:
             with open(args.pop('file'), 'r') as f:
                 args['public_key'] = f.read()
@@ -419,12 +417,23 @@ class AccountSetup(object):
             except neutron_exceptions.BadRequest, e:
                 log.error('Cannot add internal subnet:%s' % str(e))
 
+    def __set_clients(self, **config_data):
+        username = config_data.pop('os_username', self.os_username)
+        password = config_data.pop('os_password', self.os_password)
+        tenant_name = config_data.pop('os_tenant_name', self.os_tenant_name)
+        auth_url = config_data.pop('os_auth_url', self.os_auth_url)
+        self.__reset_clients(username, password, tenant_name, auth_url)
+
     def setup_config(self, config):
         log.debug('Checking schema')
         validate(config, schema.SCHEMA)
         for action in config:
+            self.__set_clients(**action)
             # For each item listed
             for section in action.keys():
+                if section in SECTION_IGNORE:
+                    log.debug("Ignoring section:%s" % section)
+                    continue
                 # Do sections randomly
                 for item in action[section]:
                     # For item in section

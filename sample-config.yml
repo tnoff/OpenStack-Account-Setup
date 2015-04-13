@@ -56,10 +56,9 @@
 - keypairs:
     - name: 'my-public-key'
       file: '/home/user/.ssh/id_rsa.pub'
-      # If no username or password specified, will use local auth instead
-      user:
-        name: 'arya'
-        password: 'joffrey_sucks'
+  os_username: 'arya'
+  os_password: 'joffrey_sucks'
+  os_tenant_name: 'winterfell'
 
 - networks:
     - name: 'the north'
