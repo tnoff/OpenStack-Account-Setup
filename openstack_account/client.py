@@ -412,9 +412,12 @@ class AccountSetup(object):
                                                                  router['id']))
         if internal:
             data = {'subnet_id' : internal['id']}
-            self.neutron.add_interface_router(router['id'], data)
-            log.debug('Set internal subnet:%s for router:%s' % (internal['id'],
-                                                                router['id']))
+            try:
+                self.neutron.add_interface_router(router['id'], data)
+                log.debug('Set internal subnet:%s for router:%s' % (internal['id'],
+                                                                    router['id']))
+            except neutron_exceptions.BadRequest, e:
+                log.error('Cannot add internal subnet:%s' % str(e))
 
     def setup_config(self, config):
         log.debug('Checking schema')
