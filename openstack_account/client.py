@@ -84,23 +84,33 @@ class AccountSetup(object):
 
     @contextmanager
     def __temp_user(self, tenant):
-        # Create temp user that is authorized to tenant
-        log.debug('Creating temp user for tenant:%s' % tenant.id)
-        username = self.__random_string(prefix='user-')
-        password = self.__random_string(length=30)
-        user = self.keystone.users.create(name=username,
-                                          password=password,
-                                          email=None)
-        log.debug('Created temp user:%s for tenant:%s' % (user.id, tenant.id))
-        member_role = self.__find_role('member')
-        tenant.add_user(user.id, member_role.id)
+        created_user = False
+        # If tenant given is None, return None
+        if not tenant:
+            user = None
+            password = None
+        else:
+            # Create temp user that is authorized to tenant
+            log.debug('Creating temp user for tenant:%s' % tenant.id)
+            username = self.__random_string(prefix='user-')
+            password = self.__random_string(length=30)
+            user = self.keystone.users.create(name=username,
+                                              password=password,
+                                              email=None)
+            created_user = True
+            log.debug('Created temp user:%s for tenant:%s' % (user.id, tenant.id))
+            member_role = self.__find_role('member')
+            tenant.add_user(user.id, member_role.id)
         try:
             yield user, password
         finally:
-            log.debug('Deleting temp user:%s' % user.id)
-            self.keystone.users.delete(user.id)
+            if created_user:
+                log.debug('Deleting temp user:%s' % user.id)
+                self.keystone.users.delete(user.id)
 
     def __find_user(self, name):
+        if not name:
+            return None
         for user in self.keystone.users.list():
             if user.name == name:
                 return user
@@ -115,6 +125,8 @@ class AccountSetup(object):
         return None
 
     def __find_project(self, name):
+        if not name:
+            return None
         for tenant in self.keystone.tenants.list():
             if tenant.name == name:
                 return tenant
@@ -237,21 +249,31 @@ class AccountSetup(object):
         log.debug('Creating security group:%s' % args)
         tenant = self.__find_project(args.pop('tenant_name', None))
         rules = args.pop('rules', None)
+        # By default use self.nova
+        # If another user returned, use that nova
+        nova = self.nova
         with self.__temp_user(tenant) as (user, user_password):
-            nova = nova_v1.Client(user.name,
-                                  user_password,
-                                  tenant.name,
-                                  self.os_auth_url)
-            try:
-                group = nova.security_groups.create(**args)
-                group_id = group.id # pylint: disable=no-member
-            except nova_exceptions.BadRequest:
-                # Group already exists
-                group_id = self.__find_sec_group(nova, args.pop('name', None))
-            except nova_exceptions.ClientException, e:
-                log.error('Cannot create security group:%s' % e)
-                return
-            log.info("Created security group:%s" % group_id)
+            # If user is None, just use regular nova
+            if user:
+                nova = nova_v1.Client(user.name,
+                                      user_password,
+                                      tenant.name,
+                                      self.os_auth_url)
+            group_id = self.__find_sec_group(nova, args['name'])
+            if group_id:
+                log.debug('Group already exists:%s' % group_id)
+            else:
+                try:
+                    group = nova.security_groups.create(**args)
+                    group_id = group.id # pylint: disable=no-member
+                    log.debug('Created security group:%s' % group_id)
+                except nova_exceptions.BadRequest:
+                    # Group already exists
+                    group_id = self.__find_sec_group(nova, args.pop('name', None))
+                    log.debug('Group already exists:%s' % group_id)
+                except nova_exceptions.ClientException, e:
+                    log.error('Cannot create security group:%s' % e)
+                    return
             for rule in rules:
                 try:
                     r = nova.security_group_rules.create(group_id, **rule)
@@ -305,14 +327,18 @@ class AccountSetup(object):
         wait = args.pop('wait', None)
         timeout = args.pop('timeout', None)
         interval = args.pop('wait_interval', None)
+        # By default use glance that already exists
+        glance = self.glance
         with self.__temp_user(tenant) as (user, user_password):
-            keystone = key_v2.Client(username=user.name,
-                                     password=user_password,
-                                     tenant_name=tenant.name,
-                                     auth_url=self.os_auth_url)
-            token = keystone.auth_token
-            image_endpoint = keystone.service_catalog.url_for(service_type='image')
-            glance = glance_client('1', endpoint=image_endpoint, token=token)
+            # If user given, make a new glance
+            if user:
+                keystone = key_v2.Client(username=user.name,
+                                         password=user_password,
+                                         tenant_name=tenant.name,
+                                         auth_url=self.os_auth_url)
+                token = keystone.auth_token
+                image_endpoint = keystone.service_catalog.url_for(service_type='image')
+                glance = glance_client('1', endpoint=image_endpoint, token=token)
             image_name = args.get('name', None)
             image = self.__find_image(glance, image_name)
             if image:

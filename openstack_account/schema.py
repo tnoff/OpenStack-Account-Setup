@@ -134,7 +134,7 @@ SCHEMA = {
                             "type": ["string", "null"]
                         }
                     },
-                    "required": ["name", "description", "tenant_name"],
+                    "required": ["name", "description"],
                     "additionalProperties" : True
                 }
             },
@@ -208,7 +208,6 @@ SCHEMA = {
                         }
                     },
                     "required": [
-                        "tenant_name",
                         "disk_format",
                         "container_format",
                         "name"
