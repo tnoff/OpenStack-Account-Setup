@@ -315,9 +315,12 @@ class AccountSetup(object):
         stringy += 'echo "Please enter your OpenStack Password:"\n'
         stringy += 'read -s OS_PASSWORD_INPUT\n'
         stringy += 'export OS_PASSWORD=$OS_PASSWORD_INPUT\n'
-        with open(file_name, 'w') as f:
-            f.write(stringy)
-        log.debug('Created source file:%s' % file_name)
+        try:
+            with open(file_name, 'w') as f:
+                f.write(stringy)
+            log.debug('Created source file:%s' % file_name)
+        except IOError:
+            log.error('Error creating source file:%s' % file_name)
 
     def create_image(self, **args):
         log.debug('Creating image:%s' % args)
