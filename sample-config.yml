@@ -18,7 +18,8 @@
 - projects:
     - name: 'winterfell'
       description: 'winter is coming'
-      role: '_member_'
+      # Add user with roles
+      role: 'admin'
       user: 'arya'
 
 - flavors:
@@ -34,6 +35,8 @@
 
     - tenant_name: 'winterfell'
       instances: 20
+      ram: 5120000
+      cores: 80
 
 - cinder_quotas:
     # Will find tenant by name
@@ -42,6 +45,8 @@
 
     - tenant_name: 'winterfell'
       volumes: 20
+      gigabytes: 1000000
+
 
 - security_groups:
     - name: 'ssh port'
