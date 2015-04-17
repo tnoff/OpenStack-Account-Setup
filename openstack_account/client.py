@@ -31,6 +31,7 @@ SECTION_SCHEMA = {
     'networks' : 'create_network',
     'subnets' : 'create_subnet',
     'routers' : 'create_router',
+    'volumes' : 'create_volume',
 }
 SECTION_IGNORE = [
     'os_username',
@@ -38,8 +39,6 @@ SECTION_IGNORE = [
     'os_tenant_name',
     'os_auth_url',
 ]
-WAIT_INTERVAL = 5
-WAIT_TIMEOUT = 3600
 
 class AccountSetup(object):
     def __init__(self, username, password, tenant_name, auth_url):
@@ -84,8 +83,6 @@ class AccountSetup(object):
 
     def __wait_status(self, function, obj_id, accept_states, reject_states,
                       interval, timeout):
-        interval = interval or WAIT_INTERVAL
-        timeout = timeout or WAIT_TIMEOUT
         obj = function(obj_id)
         expires = time.time() + timeout
         while time.time() <= expires:
@@ -190,6 +187,12 @@ class AccountSetup(object):
                         return router
                 else:
                     return router
+        return None
+
+    def __find_volume(self, cinder, name):
+        for volume in cinder.volumes.list():
+            if volume.name == name:
+                return volume
         return None
 
     def create_user(self, **args):
@@ -407,6 +410,25 @@ class AccountSetup(object):
                                                                     router['id']))
             except neutron_exceptions.BadRequest, e:
                 log.error('Cannot add internal subnet:%s' % str(e))
+
+    def create_volume(self, **args):
+        log.debug('Create volume:%s' % args)
+        name = args.pop('name', None)
+        wait = args.pop('wait')
+        timeout = args.pop('timeout')
+        interval = args.pop('interval')
+        volume = self.__find_volume(self.cinder, name)
+        # Cinder uses 'display name' because fuck convention i suppose
+        args['display_name'] = name
+        if volume:
+            log.debug('Volume already exists:%s' % volume.id)
+        else:
+            volume = self.cinder.volumes.create(**args)
+            log.debug('Volume created:%s' % volume.id)
+        if wait:
+            log.info('Waiting for volume:%s' % volume.id)
+            self.__wait_status(self.cinder.volumes.get, volume.id,
+                               ['available'], ['error'], interval, timeout)
 
     def __set_clients(self, **config_data):
         username = config_data.pop('os_username', self.os_username)

@@ -207,13 +207,16 @@ SCHEMA = {
                             "type": "string"
                         },
                         "wait": {
-                            "type": "boolean"
+                            "type": "boolean",
+                            "default": False,
                         },
                         "timeout": {
-                            "type": "integer"
+                            "type": "integer",
+                            "default": 1800
                         },
                         "wait_interval": {
-                            "type": "integer"
+                            "type": "integer",
+                            "default": 5,
                         }
                     },
                     "required": [
@@ -337,7 +340,38 @@ SCHEMA = {
                         "type": "string"
                     }
                 },
-                "requires": ["name"]
+                "requires": ["name"],
+                "additionalProperties" : True
+            }
+        },
+        "volumes": {
+            "title": "volumes",
+            "type" : "array",
+            "items": {
+                "title": "volume",
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "size": {
+                        "type": "integer"
+                    },
+                    "wait": {
+                        "type": "boolean",
+                        "default": False
+                    },
+                    "timeout": {
+                        "type": "integer",
+                        "default": 1800,
+                    },
+                    "wait_interval": {
+                        "type": "integer",
+                        "default": 5
+                    }
+                },
+                "requires": ["name", "size"],
+                "additionalProperties": True
             }
         }
     }
