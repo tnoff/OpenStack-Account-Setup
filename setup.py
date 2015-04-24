@@ -13,6 +13,8 @@ setuptools.setup(
         'python-keystoneclient >= 0.10.1',
         'python-neutronclient>=2.3.11',
         'python-novaclient >= 2.18.1',
+
+        'PyYAML >= 3.11',
     ],
     entry_points={
         'console_scripts' : [
