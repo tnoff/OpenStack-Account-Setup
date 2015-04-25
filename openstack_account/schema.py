@@ -197,9 +197,6 @@ SCHEMA = {
                     "title": "image",
                     "type": "object",
                     "properties": {
-                        "tenant_name": {
-                            "type": "string"
-                        },
                         "disk_format": {
                             "type": "string"
                         },

@@ -324,36 +324,24 @@ class AccountSetup(object):
 
     def create_image(self, **args):
         log.debug('Creating image:%s' % args)
-        tenant = self.__find_project(args.pop('tenant_name', None))
         wait = args.pop('wait', None)
         timeout = args.pop('timeout', None)
         interval = args.pop('wait_interval', None)
         # By default use glance that already exists
-        glance = self.glance
-        with self.__temp_user(tenant) as (user, user_password):
-            # If user given, make a new glance
-            if user:
-                keystone = key_v2.Client(username=user.name,
-                                         password=user_password,
-                                         tenant_name=tenant.name,
-                                         auth_url=self.os_auth_url)
-                token = keystone.auth_token
-                image_endpoint = keystone.service_catalog.url_for(service_type='image')
-                glance = glance_client('1', endpoint=image_endpoint, token=token)
-            image_name = args.get('name', None)
-            image = self.__find_image(glance, image_name)
-            if image:
-                log.info('Image exists:%s' % image.id)
-                return
-            file_location = args.pop('file', None)
-            image = glance.images.create(**args)
-            if file_location:
-                image.update(data=open(file_location, 'rb'))
-            log.info('Created image:%s' % image.id)
-            if wait:
-                log.info('Waiting for image:%s' % image.id)
-                self.__wait_status(glance.images.get, image.id, ['active'],
-                                   ['error'], interval, timeout)
+        image_name = args.get('name', None)
+        image = self.__find_image(self.glance, image_name)
+        if image:
+            log.info('Image exists:%s' % image.id)
+            return
+        file_location = args.pop('file', None)
+        image = self.glance.images.create(**args)
+        if file_location:
+            image.update(data=open(file_location, 'rb'))
+        log.info('Created image:%s' % image.id)
+        if wait:
+            log.info('Waiting for image:%s' % image.id)
+            self.__wait_status(self.glance.images.get, image.id, ['active'],
+                               ['error'], interval, timeout)
 
     def create_network(self, **args):
         log.debug('Creating network:%s' % args)
