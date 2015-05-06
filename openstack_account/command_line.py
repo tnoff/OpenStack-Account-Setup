@@ -9,9 +9,9 @@ import yaml
 
 log_format = '%(asctime)s-%(levelname)s-%(message)s'
 log = logging.getLogger('openstack_account')
-log.setLevel(logging.DEBUG)
+log.setLevel(logging.INFO)
 handle = logging.StreamHandler()
-handle.setLevel(logging.DEBUG)
+handle.setLevel(logging.INFO)
 form = logging.Formatter(log_format)
 handle.setFormatter(form)
 log.addHandler(handle)
