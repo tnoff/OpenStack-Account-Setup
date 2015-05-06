@@ -27,34 +27,30 @@ def parse_args():
 
 def get_env_args(args):
     # Check environment for variables if not set on command line
-    if not args['username']:
-        args['username'] = os.getenv('OS_USERNAME', None)
-    if not args['password']:
-        args['password'] = os.getenv('OS_PASSWORD', None)
-    if not args['tenant_name']:
-        args['tenant_name'] = os.getenv('OS_TENANT_NAME', None)
-    if not args['auth_url']:
-        args['auth_url'] = os.getenv('OS_AUTH_URL', None)
+    if not args.username:
+        args.username = os.getenv('OS_USERNAME',)
+    if not args.password:
+        args.password = os.getenv('OS_PASSWORD',)
+    if not args.tenant_name:
+        args.tenant_name = os.getenv('OS_TENANT_NAME',)
+    if not args.auth_url:
+        args.auth_url = os.getenv('OS_AUTH_URL',)
     must_have = ['username', 'password', 'tenant_name', 'auth_url']
     for item in must_have:
-        if args[item] == None:
+        if not getattr(args, item):
             log.error('Need arg:%s' % item)
             sys.exit('')
     return args
 
 def main():
-    args = vars(parse_args())
     log.debug('Reading CLI args')
-    args = get_env_args(args)
+    args = get_env_args(parse_args())
     log.debug('Initialzing Account Setup')
-    a = AccountSetup(args['username'],
-                     args['password'],
-                     args['tenant_name'],
-                     args['auth_url'])
-    with open(args['config_file'], 'r') as f:
-        log.debug('Loading configs from:%s' % args['config_file'])
+    a = AccountSetup(args.username,
+                     args.password,
+                     args.tenant_name,
+                     args.auth_url,)
+    with open(args.config_file, 'r') as f:
+        log.debug('Loading configs from:%s' % args.config_file)
         config_data = yaml.load(f)
         a.setup_config(config_data)
-
-if __name__ == '__main__':
-    main()
