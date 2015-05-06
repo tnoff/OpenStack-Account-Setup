@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import setuptools
 
-VERSION = '0.9'
+VERSION = '0.10'
 
 setuptools.setup(
     author='Tyler Daniel North',
@@ -18,7 +18,7 @@ setuptools.setup(
     ],
     entry_points={
         'console_scripts' : [
-            'os-account = openstack_account.cli:main',
+            'os-account = openstack_account.command_line:main',
         ]
     },
     packages=[
