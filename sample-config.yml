@@ -101,6 +101,12 @@
       wait: True
       timeout: 1200
 
+- volumes:
+    - name: 'weirwood'
+      size: 20
+      wait: True
+      timeout: 3600
+
 - servers:
     - name: 'ice'
       flavor_name: 'kraken'
