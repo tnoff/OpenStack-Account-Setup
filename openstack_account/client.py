@@ -432,6 +432,8 @@ class AccountSetup(object):
                                ['available'], ['error'], interval, timeout)
 
     def __set_clients(self, **config_data):
+        # Allow for the override of openstack auth args in each action
+        # New args will be applied for every section in that action
         username = config_data.pop('os_username', self.os_username)
         password = config_data.pop('os_password', self.os_password)
         tenant_name = config_data.pop('os_tenant_name', self.os_tenant_name)
