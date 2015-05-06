@@ -1,3 +1,5 @@
+from openstack_account import settings
+
 SCHEMA = {
     "title": "accounts",
     "type": "array",
@@ -208,15 +210,15 @@ SCHEMA = {
                         },
                         "wait": {
                             "type": "boolean",
-                            "default": False,
+                            "default": settings.IMAGE_WAIT
                         },
                         "timeout": {
                             "type": "integer",
-                            "default": 1800
+                            "default": settings.IMAGE_WAIT_TIMEOUT
                         },
                         "wait_interval": {
                             "type": "integer",
-                            "default": 5,
+                            "default": settings.IMAGE_WAIT_INTERVAL
                         }
                     },
                     "required": [
@@ -359,15 +361,15 @@ SCHEMA = {
                     },
                     "wait": {
                         "type": "boolean",
-                        "default": False
+                        "default": settings.VOLUME_WAIT
                     },
                     "timeout": {
                         "type": "integer",
-                        "default": 1800,
+                        "default": settings.VOLUME_WAIT_TIMEOUT
                     },
                     "wait_interval": {
                         "type": "integer",
-                        "default": 5
+                        "default": settings.VOLUME_WAIT_INTERVAL
                     }
                 },
                 "requires": ["name", "size"],

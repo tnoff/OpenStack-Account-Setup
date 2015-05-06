@@ -1,4 +1,5 @@
 from openstack_account import schema
+from openstack_account import settings
 
 from cinderclient.v1 import client as cinder_v1
 from glanceclient import Client as glance_client
@@ -327,9 +328,9 @@ class AccountSetup(object):
 
     def create_image(self, **args):
         log.debug('Creating image:%s' % args)
-        wait = args.pop('wait', None)
-        timeout = args.pop('timeout', None)
-        interval = args.pop('wait_interval', None)
+        wait = args.pop('wait', settings.IMAGE_WAIT)
+        timeout = args.pop('timeout', settings.IMAGE_WAIT_TIMEOUT)
+        interval = args.pop('wait_interval', settings.IMAGE_WAIT_INTERVAL)
         # By default use glance that already exists
         image_name = args.get('name', None)
         image = self.__find_image(self.glance, image_name)
@@ -414,9 +415,9 @@ class AccountSetup(object):
     def create_volume(self, **args):
         log.debug('Create volume:%s' % args)
         name = args.pop('name', None)
-        wait = args.pop('wait')
-        timeout = args.pop('timeout')
-        interval = args.pop('interval')
+        wait = args.pop('wait', settings.VOLUME_WAIT)
+        timeout = args.pop('timeout', settings.VOLUME_WAIT_TIMEOUT)
+        interval = args.pop('interval', settings.VOLUME_WAIT_INTERVAL)
         volume = self.__find_volume(self.cinder, name)
         # Cinder uses 'display name' because fuck convention i suppose
         args['display_name'] = name
