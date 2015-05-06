@@ -100,3 +100,10 @@
       # Wait until image is active
       wait: True
       timeout: 1200
+
+- servers:
+    - name: 'ice'
+      flavor_name: 'kraken'
+      image_name: 'Debian 7.3'
+      wait: True
+      timeout: 1200

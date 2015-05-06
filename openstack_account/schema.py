@@ -317,7 +317,7 @@ SCHEMA = {
                             "type": "string"
                         }
                     },
-                    "requires": ["name"],
+                    "required": ["name"],
                     "additionalProperties" : True
                 }
             }
@@ -342,7 +342,7 @@ SCHEMA = {
                         "type": "string"
                     }
                 },
-                "requires": ["name"],
+                "required": ["name"],
                 "additionalProperties" : True
             }
         },
@@ -372,7 +372,46 @@ SCHEMA = {
                         "default": settings.VOLUME_WAIT_INTERVAL
                     }
                 },
-                "requires": ["name", "size"],
+                "required": ["name", "size"],
+                "additionalProperties": True
+            }
+        },
+        "servers": {
+            "title": "servers",
+            "type": "array",
+            "items": {
+                "title": "server",
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "flavor_name": {
+                        "type": "string"
+                    },
+                    "flavor": {
+                        "type": "string"
+                    },
+                    "image_name": {
+                        "type": "string"
+                    },
+                    "image": {
+                        "type": "string"
+                    },
+                    "wait": {
+                        "type": "boolean",
+                        "default": settings.SERVER_WAIT
+                    },
+                    "timeout": {
+                        "type": "integer",
+                        "default": settings.SERVER_WAIT_TIMEOUT
+                    },
+                    "wait_interval": {
+                        "type": "integer",
+                        "default": settings.SERVER_WAIT_INTERVAL
+                    }
+                },
+                "required": ["name"],
                 "additionalProperties": True
             }
         }

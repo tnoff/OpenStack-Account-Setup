@@ -33,6 +33,7 @@ SECTION_SCHEMA = {
     'subnets' : 'create_subnet',
     'routers' : 'create_router',
     'volumes' : 'create_volume',
+    'servers' : 'create_server',
 }
 SECTION_IGNORE = [
     'os_username',
@@ -194,6 +195,12 @@ class AccountSetup(object):
         for volume in cinder.volumes.list():
             if volume.name == name:
                 return volume
+        return None
+
+    def __find_server(self, nova, name):
+        for server in nova.servers.list():
+            if server.name == name:
+                return server
         return None
 
     def create_user(self, **args):
@@ -430,6 +437,31 @@ class AccountSetup(object):
             log.info('Waiting for volume:%s' % volume.id)
             self.__wait_status(self.cinder.volumes.get, volume.id,
                                ['available'], ['error'], interval, timeout)
+
+    def create_server(self, **args):
+        log.debug('Create server:%s' % args)
+        name = args.get('name')
+        wait = args.pop('wait', settings.SERVER_WAIT)
+        timeout = args.pop('timeout', settings.SERVER_WAIT_TIMEOUT)
+        interval = args.pop('interval', settings.SERVER_WAIT_INTERVAL)
+        server = self.__find_server(self.nova, name)
+        flavor_name = args.pop('flavor_name', None)
+        if flavor_name:
+            args['flavor'] = self.__find_flavor(self.nova, flavor_name)
+        image_name = args.pop('image_name', None)
+        if image_name:
+            args['image'] = self.__find_image(self.glance, image_name)
+        # Check for and build server
+        server = self.__find_server(self.nova, name)
+        if server:
+            log.info('Server already exists:%s' % server.id)
+        else:
+            server = self.nova.servers.create(**args)
+            log.info('Server created:%s' % server.id)
+        if wait:
+            log.info("Waiting for server:%s" % server.id)
+            self.__wait_status(self.nova.servers.get, server.id,
+                               ['ACTIVE'], ['ERROR'], interval, timeout)
 
     def __set_clients(self, **config_data):
         # Allow for the override of openstack auth args in each action
