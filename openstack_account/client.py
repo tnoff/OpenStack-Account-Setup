@@ -359,12 +359,12 @@ class AccountSetup(object):
         tenant = self.__find_project(args.pop('tenant_name', None))
         net = self.__find_network(self.neutron, args['name'], tenant.id)
         if net:
-            log.debug('Network already exists:%s' % net['id'])
+            log.info('Network already exists:%s' % net['id'])
             return
         if tenant:
             args['tenant_id'] = tenant.id
         network = self.neutron.create_network({'network' : args})
-        log.debug('Created network:%s' % network['network']['id'])
+        log.info('Created network:%s' % network['network']['id'])
 
     def create_subnet(self, **args):
         log.debug('Creating subnet:%s' % args)
@@ -375,7 +375,7 @@ class AccountSetup(object):
         sub = self.__find_subnet(self.neutron, args['name'], tenant.id,
                                  network['id'])
         if sub:
-            log.debug('Subnet already exists:%s' % sub['id'])
+            log.info('Subnet already exists:%s' % sub['id'])
             return
         if tenant:
             args['tenant_id'] = tenant.id
@@ -384,7 +384,7 @@ class AccountSetup(object):
         except neutron_exceptions.BadRequest, e:
             log.error('Cannot create subnet:%s' % str(e))
             return
-        log.debug('Created subnet:%s' % subnet['subnet']['id'])
+        log.info('Created subnet:%s' % subnet['subnet']['id'])
 
     def create_router(self, **args):
         log.debug('Create router:%s' % args)
@@ -399,23 +399,23 @@ class AccountSetup(object):
                                       args.pop('internal_subnet', None),
                                       None, None)
         if router:
-            log.debug('Router already exists:%s' % router['id'])
+            log.info('Router already exists:%s' % router['id'])
         else:
             router = self.neutron.create_router({'router' : args})['router']
-            log.debug('Created router:%s' % router['id'])
+            log.info('Created router:%s' % router['id'])
 
         if external:
             data = {'network_id' : external['id']}
             self.neutron.add_gateway_router(router['id'],
                                             data)
-            log.debug('Set external network:%s for router:%s' % (external['id'],
-                                                                 router['id']))
+            log.info('Set external network:%s for router:%s' % (external['id'],
+                                                                router['id']))
         if internal:
             data = {'subnet_id' : internal['id']}
             try:
                 self.neutron.add_interface_router(router['id'], data)
-                log.debug('Set internal subnet:%s for router:%s' % (internal['id'],
-                                                                    router['id']))
+                log.info('Set internal subnet:%s for router:%s' % (internal['id'],
+                                                                   router['id']))
             except neutron_exceptions.BadRequest, e:
                 log.error('Cannot add internal subnet:%s' % str(e))
 
@@ -429,10 +429,10 @@ class AccountSetup(object):
         # Cinder uses 'display name' because fuck convention i suppose
         args['display_name'] = name
         if volume:
-            log.debug('Volume already exists:%s' % volume.id)
+            log.info('Volume already exists:%s' % volume.id)
         else:
             volume = self.cinder.volumes.create(**args)
-            log.debug('Volume created:%s' % volume.id)
+            log.info('Volume created:%s' % volume.id)
         if wait:
             log.info('Waiting for volume:%s' % volume.id)
             self.__wait_status(self.cinder.volumes.get, volume.id,
