@@ -3,6 +3,7 @@ from openstack_account import settings
 from openstack_account import utils
 
 from openstack_account.openstack import keystone as os_keystone
+from openstack_account.openstack import nova as os_nova
 
 from cinderclient.v1 import client as cinder_v1
 from glanceclient import Client as glance_client
@@ -10,7 +11,6 @@ from keystoneclient.v2_0 import client as key_v2
 from neutronclient.v2_0 import client as neutron_v2
 from neutronclient.common import exceptions as neutron_exceptions
 from novaclient.v1_1 import client as nova_v1 #pylint: disable=no-name-in-module
-from novaclient import exceptions as nova_exceptions
 
 from jsonschema import validate
 import logging
@@ -71,12 +71,6 @@ class AccountSetup(object):
         image_endpoint = self.keystone.service_catalog.url_for(service_type='image')
         self.glance = glance_client('1', endpoint=image_endpoint, token=token)
 
-    def __find_sec_group(self, nova, name):
-        for group in nova.security_groups.list():
-            if group.name == name:
-                return group.id
-        return None
-
     def __find_image(self, glance, name):
         for im in glance.images.list():
             if im.name == name:
@@ -122,12 +116,6 @@ class AccountSetup(object):
                 return volume
         return None
 
-    def __find_server(self, nova, name):
-        for server in nova.servers.list():
-            if server.name == name:
-                return server
-        return None
-
     def create_user(self, **args):
         return os_keystone.create_user(self.keystone, **args)
 
@@ -135,26 +123,10 @@ class AccountSetup(object):
         return os_keystone.create_project(self.keystone, **args)
 
     def create_flavor(self, **args):
-        log.info('Creating flavor:%s' % args)
-        try:
-            self.nova.flavors.create(**args)
-        except nova_exceptions.Conflict:
-            # Flavor already exists
-            log.debug('Flavor already exists')
-        except TypeError, e:
-            log.error('Cannot create flavor:%s', e)
+        return os_nova.create_flavor(self.nova, **args)
 
     def set_nova_quota(self, **args):
-        log.info('Setting nova quotas:%s' % args)
-        tenant_name = args.pop('tenant_name', None)
-        project = os_keystone.find_project(tenant_name, self.keystone)
-        if not project:
-            log.error('Cannot find project:%s' % tenant_name)
-            return
-        try:
-            self.nova.quotas.update(project.id, **args)
-        except nova_exceptions.BadRequest, e:
-            log.error('Cannot set quotas:%s' % e)
+        return os_nova.set_nova_quota(self.nova, self.keystone, **args)
 
     def set_cinder_quota(self, **args):
         log.info('Setting cinder quotas:%s' % args)
@@ -163,57 +135,11 @@ class AccountSetup(object):
         self.cinder.quotas.update(project.id, **args)
 
     def create_security_group(self, **args):
-        log.debug('Creating security group:%s' % args)
-        tenant = os_keystone.find_project(args.pop('tenant_name', None),
-                                          self.keystone)
-        rules = args.pop('rules', None)
-        # By default use self.nova
-        # If another user returned, use that nova
-        nova = self.nova
-        with os_keystone.temp_user(tenant, self.keystone) as (user, user_password):
-            # If user is None, just use regular nova
-            if user:
-                nova = nova_v1.Client(user.name,
-                                      user_password,
-                                      tenant.name,
-                                      self.os_auth_url)
-            group_id = self.__find_sec_group(nova, args['name'])
-            if group_id:
-                log.debug('Group already exists:%s' % group_id)
-            else:
-                try:
-                    group = nova.security_groups.create(**args)
-                    group_id = group.id # pylint: disable=no-member
-                    log.debug('Created security group:%s' % group_id)
-                except nova_exceptions.BadRequest:
-                    # Group already exists
-                    group_id = self.__find_sec_group(nova, args.pop('name', None))
-                    log.debug('Group already exists:%s' % group_id)
-                except nova_exceptions.ClientException, e:
-                    log.error('Cannot create security group:%s' % e)
-                    return
-            for rule in rules:
-                try:
-                    r = nova.security_group_rules.create(group_id, **rule)
-                except nova_exceptions.BadRequest:
-                    log.debug('Cannot create rule, already exists')
-                    continue
-                except nova_exceptions.CommandError, e:
-                    log.error('Cannot create rule:%s' % e)
-                    continue
-                log.info('Created security group rule:%s' % r)
+        return os_nova.create_security_group(self.nova, self.keystone,
+                                             self.os_auth_url, **args)
 
     def create_keypair(self, **args):
-        log.info('Creating keypair:%s' % args)
-        nova = self.nova
-        if args['file']:
-            with open(args.pop('file'), 'r') as f:
-                args['public_key'] = f.read()
-        try:
-            nova.keypairs.create(**args)
-            log.debug('Created keypair:%s' % args['name'])
-        except nova_exceptions.Conflict:
-            log.debug('Keypair already exists')
+        return os_nova.create_keypair(self.nova, **args)
 
     def create_source_file(self, **args):
         log.info('Creating source file:%s' % args)
@@ -345,29 +271,7 @@ class AccountSetup(object):
                               ['available'], ['error'], interval, timeout)
 
     def create_server(self, **args):
-        log.debug('Create server:%s' % args)
-        name = args.get('name')
-        wait = args.pop('wait', settings.SERVER_WAIT)
-        timeout = args.pop('timeout', settings.SERVER_WAIT_TIMEOUT)
-        interval = args.pop('interval', settings.SERVER_WAIT_INTERVAL)
-        server = self.__find_server(self.nova, name)
-        flavor_name = args.pop('flavor_name', None)
-        if flavor_name:
-            args['flavor'] = self.__find_flavor(self.nova, flavor_name)
-        image_name = args.pop('image_name', None)
-        if image_name:
-            args['image'] = self.__find_image(self.glance, image_name)
-        # Check for and build server
-        server = self.__find_server(self.nova, name)
-        if server:
-            log.info('Server already exists:%s' % server.id)
-        else:
-            server = self.nova.servers.create(**args)
-            log.info('Server created:%s' % server.id)
-        if wait:
-            log.info("Waiting for server:%s" % server.id)
-            utils.wait_status(self.nova.servers.get, server.id,
-                              ['ACTIVE'], ['ERROR'], interval, timeout)
+        return os_nova.create_server(self.nova, **args)
 
     def __set_clients(self, **config_data):
         # Allow for the override of openstack auth args in each action
