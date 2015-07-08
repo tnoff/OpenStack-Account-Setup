@@ -24,7 +24,10 @@ def temp_user(tenant, keystone):
                                      email=None)
         created_user = True
         log.debug('Created temp user:%s for tenant:%s' % (user.id, tenant.id))
-        member_role = find_role('member', keystone)
+        member_role = find_role('_member_', keystone)
+        # stupid keystone is stupid
+        if not member_role:
+            member_role = find_role('member', keystone)
         tenant.add_user(user.id, member_role.id)
     try:
         yield user, password
