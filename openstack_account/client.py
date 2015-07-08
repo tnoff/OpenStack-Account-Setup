@@ -1,5 +1,6 @@
 from openstack_account import schema
 from openstack_account import settings
+from openstack_account import utils
 
 from cinderclient.v1 import client as cinder_v1
 from glanceclient import Client as glance_client
@@ -13,9 +14,6 @@ from novaclient import exceptions as nova_exceptions
 from contextlib import contextmanager
 from jsonschema import validate
 import logging
-import random
-import string
-import time
 
 log = logging.getLogger(__name__)
 
@@ -73,25 +71,6 @@ class AccountSetup(object):
         image_endpoint = self.keystone.service_catalog.url_for(service_type='image')
         self.glance = glance_client('1', endpoint=image_endpoint, token=token)
 
-
-    def __random_string(self, prefix='', length=20):
-        chars = string.ascii_lowercase + string.digits
-        s = ''.join(random.choice(chars) for _ in range(length))
-        return prefix + s
-
-    def __wait_status(self, function, obj_id, accept_states, reject_states,
-                      interval, timeout):
-        obj = function(obj_id)
-        expires = time.time() + timeout
-        while time.time() <= expires:
-            if obj.status in accept_states:
-                return True
-            if obj.status in reject_states:
-                return False
-            time.sleep(interval)
-            obj = function(obj_id)
-        return False
-
     @contextmanager
     def __temp_user(self, tenant):
         created_user = False
@@ -102,8 +81,8 @@ class AccountSetup(object):
         else:
             # Create temp user that is authorized to tenant
             log.debug('Creating temp user for tenant:%s' % tenant.id)
-            username = self.__random_string(prefix='user-')
-            password = self.__random_string(length=30)
+            username = utils.random_string(prefix='user-')
+            password = utils.random_string(length=30)
             user = self.keystone.users.create(name=username,
                                               password=password,
                                               email=None)
@@ -347,8 +326,8 @@ class AccountSetup(object):
         log.info('Created image:%s' % image.id)
         if wait:
             log.info('Waiting for image:%s' % image.id)
-            self.__wait_status(self.glance.images.get, image.id, ['active'],
-                               ['error'], interval, timeout)
+            utils.wait_status(self.glance.images.get, image.id, ['active'],
+                              ['error'], interval, timeout)
 
     def create_network(self, **args):
         log.debug('Creating network:%s' % args)
@@ -431,8 +410,8 @@ class AccountSetup(object):
             log.info('Volume created:%s' % volume.id)
         if wait:
             log.info('Waiting for volume:%s' % volume.id)
-            self.__wait_status(self.cinder.volumes.get, volume.id,
-                               ['available'], ['error'], interval, timeout)
+            utils.wait_status(self.cinder.volumes.get, volume.id,
+                              ['available'], ['error'], interval, timeout)
 
     def create_server(self, **args):
         log.debug('Create server:%s' % args)
@@ -456,8 +435,8 @@ class AccountSetup(object):
             log.info('Server created:%s' % server.id)
         if wait:
             log.info("Waiting for server:%s" % server.id)
-            self.__wait_status(self.nova.servers.get, server.id,
-                               ['ACTIVE'], ['ERROR'], interval, timeout)
+            utils.wait_status(self.nova.servers.get, server.id,
+                              ['ACTIVE'], ['ERROR'], interval, timeout)
 
     def __set_clients(self, **config_data):
         # Allow for the override of openstack auth args in each action
