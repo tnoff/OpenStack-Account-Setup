@@ -7,7 +7,7 @@ from keystoneclient.v2_0 import client as key_v2
 from keystoneclient.openstack.common.apiclient import exceptions as keystone_exceptions
 from neutronclient.v2_0 import client as neutron_v2
 from neutronclient.common import exceptions as neutron_exceptions
-from novaclient.v1_1 import client as nova_v1
+from novaclient.v1_1 import client as nova_v1 #pylint: disable=no-name-in-module
 from novaclient import exceptions as nova_exceptions
 
 from contextlib import contextmanager
@@ -48,11 +48,7 @@ class AccountSetup(object):
         self.os_password = password
         self.os_tenant_name = tenant_name
         self.os_auth_url = auth_url
-        self.keystone = None
-        self.nova = None
-        self.cinder = None
-        self.neutron = None
-        self.glance = None
+        self.keystone = self.nova = self.cinder = self.neutron = self.glance = None
         self.__reset_clients(self.os_username, self.os_password,
                              self.os_tenant_name, self.os_auth_url)
 
