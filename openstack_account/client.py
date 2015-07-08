@@ -2,16 +2,16 @@ from openstack_account import schema
 from openstack_account import settings
 from openstack_account import utils
 
+from openstack_account.openstack import keystone as os_keystone
+
 from cinderclient.v1 import client as cinder_v1
 from glanceclient import Client as glance_client
 from keystoneclient.v2_0 import client as key_v2
-from keystoneclient.openstack.common.apiclient import exceptions as keystone_exceptions
 from neutronclient.v2_0 import client as neutron_v2
 from neutronclient.common import exceptions as neutron_exceptions
 from novaclient.v1_1 import client as nova_v1 #pylint: disable=no-name-in-module
 from novaclient import exceptions as nova_exceptions
 
-from contextlib import contextmanager
 from jsonschema import validate
 import logging
 
@@ -71,56 +71,6 @@ class AccountSetup(object):
         image_endpoint = self.keystone.service_catalog.url_for(service_type='image')
         self.glance = glance_client('1', endpoint=image_endpoint, token=token)
 
-    @contextmanager
-    def __temp_user(self, tenant):
-        created_user = False
-        # If tenant given is None, return None
-        if not tenant:
-            user = None
-            password = None
-        else:
-            # Create temp user that is authorized to tenant
-            log.debug('Creating temp user for tenant:%s' % tenant.id)
-            username = utils.random_string(prefix='user-')
-            password = utils.random_string(length=30)
-            user = self.keystone.users.create(name=username,
-                                              password=password,
-                                              email=None)
-            created_user = True
-            log.debug('Created temp user:%s for tenant:%s' % (user.id, tenant.id))
-            member_role = self.__find_role('member')
-            tenant.add_user(user.id, member_role.id)
-        try:
-            yield user, password
-        finally:
-            if created_user:
-                log.debug('Deleting temp user:%s' % user.id)
-                self.keystone.users.delete(user.id)
-
-    def __find_user(self, name):
-        if not name:
-            return None
-        for user in self.keystone.users.list():
-            if user.name == name:
-                return user
-        return None
-
-    def __find_role(self, name):
-        if not name:
-            return None
-        for role in self.keystone.roles.list():
-            if name.lower() in role.name.lower():
-                return role
-        return None
-
-    def __find_project(self, name):
-        if not name:
-            return None
-        for tenant in self.keystone.tenants.list():
-            if tenant.name == name:
-                return tenant
-        return None
-
     def __find_sec_group(self, nova, name):
         for group in nova.security_groups.list():
             if group.name == name:
@@ -179,35 +129,10 @@ class AccountSetup(object):
         return None
 
     def create_user(self, **args):
-        log.debug('Creating user:%s' % args)
-        try:
-            user = self.keystone.users.create(**args)
-        except keystone_exceptions.Conflict:
-            # User allready exists
-            user = self.__find_user(args['name'])
-        log.info('User created:%s' % user)
-        return user
+        return os_keystone.create_user(self.keystone, **args)
 
     def create_project(self, **args):
-        log.debug('Creating project:%s' % args)
-        role = self.__find_role(args.pop('role', None))
-        args['tenant_name'] = args.pop('name', None)
-        user = self.__find_user(args.pop('user', None))
-
-        try:
-            project = self.keystone.tenants.create(**args)
-        except keystone_exceptions.Conflict:
-            project = self.__find_project(args['tenant_name'] or None)
-        if user and role:
-            try:
-                project.add_user(user.id, role.id)
-                log.debug('Added user:%s to project:%s with role:%s' %
-                          (user.id, project.id, role.id))
-            except keystone_exceptions.Conflict:
-                # Role already exists
-                log.debug('Role exits user:%s to project:%s with role:%s' %
-                          (user.id, project.id, role.id))
-        log.info('Project created:%s' % project.id)
+        return os_keystone.create_project(self.keystone, **args)
 
     def create_flavor(self, **args):
         log.info('Creating flavor:%s' % args)
@@ -222,7 +147,7 @@ class AccountSetup(object):
     def set_nova_quota(self, **args):
         log.info('Setting nova quotas:%s' % args)
         tenant_name = args.pop('tenant_name', None)
-        project = self.__find_project(tenant_name)
+        project = os_keystone.find_project(tenant_name, self.keystone)
         if not project:
             log.error('Cannot find project:%s' % tenant_name)
             return
@@ -233,17 +158,19 @@ class AccountSetup(object):
 
     def set_cinder_quota(self, **args):
         log.info('Setting cinder quotas:%s' % args)
-        project = self.__find_project(args.pop('tenant_name', None))
+        project = os_keystone.find_project(args.pop('tenant_name', None),
+                                           self.keystone)
         self.cinder.quotas.update(project.id, **args)
 
     def create_security_group(self, **args):
         log.debug('Creating security group:%s' % args)
-        tenant = self.__find_project(args.pop('tenant_name', None))
+        tenant = os_keystone.find_project(args.pop('tenant_name', None),
+                                          self.keystone)
         rules = args.pop('rules', None)
         # By default use self.nova
         # If another user returned, use that nova
         nova = self.nova
-        with self.__temp_user(tenant) as (user, user_password):
+        with os_keystone.temp_user(tenant, self.keystone) as (user, user_password):
             # If user is None, just use regular nova
             if user:
                 nova = nova_v1.Client(user.name,
@@ -290,7 +217,8 @@ class AccountSetup(object):
 
     def create_source_file(self, **args):
         log.info('Creating source file:%s' % args)
-        tenant = self.__find_project(args.pop('tenant_name', None))
+        tenant = os_keystone.find_project(args.pop('tenant_name', None),
+                                          self.keystone)
         file_name = args.pop('file', None)
         user = args.pop('user', None)
         stringy = '#!/bin/bash\n'
@@ -331,7 +259,8 @@ class AccountSetup(object):
 
     def create_network(self, **args):
         log.debug('Creating network:%s' % args)
-        tenant = self.__find_project(args.pop('tenant_name', None))
+        tenant = os_keystone.find_project(args.pop('tenant_name', None),
+                                          self.keystone)
         net = self.__find_network(self.neutron, args['name'], tenant.id)
         if net:
             log.info('Network already exists:%s' % net['id'])
@@ -343,7 +272,8 @@ class AccountSetup(object):
 
     def create_subnet(self, **args):
         log.debug('Creating subnet:%s' % args)
-        tenant = self.__find_project(args.pop('tenant_name', None))
+        tenant = os_keystone.find_project(args.pop('tenant_name', None),
+                                          self.keystone)
         network = self.__find_network(self.neutron, args.pop('network', None),
                                       tenant.id)
         args['network_id'] = network['id']
@@ -363,7 +293,8 @@ class AccountSetup(object):
 
     def create_router(self, **args):
         log.debug('Create router:%s' % args)
-        tenant = self.__find_project(args.pop('tenant_name', None))
+        tenant = os_keystone.find_project(args.pop('tenant_name', None),
+                                          self.keystone)
         if tenant:
             args['tenant_id'] = tenant.id
         router = self.__find_router(self.neutron, args['name'], None)

@@ -21,9 +21,7 @@ setuptools.setup(
             'os-account = openstack_account.command_line:main',
         ]
     },
-    packages=[
-        'openstack_account'
-    ],
+    packages=setuptools.find_packages(),
     name='openstack_account',
     version=VERSION,
 )
