@@ -7,6 +7,13 @@ from tests import settings
 from tests.data import keystone as keystone_data
 from tests.data import flavors as flavor_data
 from tests.data import quotas as quota_data
+from tests.data import security_groups as sec_data
+
+def find_tenant(keystone, tenant_name):
+    for tenant in keystone.tenants.list():
+        if tenant.name == tenant_name:
+            return tenant.id
+    return None
 
 class TestOSAccount(unittest.TestCase):
     def setUp(self):
@@ -50,11 +57,17 @@ class TestOSAccount(unittest.TestCase):
         self.client.setup_config(config_data)
 
         # Delete tenant, remove from data, make sure exception thrown
-        tenant_id = None
-        for tenant in self.client.keystone.tenants.list():
-            if tenant.name == config_data[0]['projects'][0]['name']:
-                tenant_id = tenant.id
+        tenant_id = find_tenant(self.client.keystone,
+                                config_data[0]['projects'][0]['name'])
         self.client.keystone.tenants.delete(tenant_id)
         config_data.pop(0)
         self.assertRaises(OpenStackAccountError,
                           self.client.setup_config, config_data)
+
+    def test_security_group(self):
+        config_data = sec_data.DATA
+        self.client.setup_config(config_data)
+
+        # make sure it works without projects as well
+        config_data.pop(0)
+        self.client.setup_config(config_data)

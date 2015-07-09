@@ -60,37 +60,44 @@ def create_security_group(nova, keystone, auth_url, **kwargs):
     log.debug('Creating security group:%s' % kwargs)
     tenant = os_keystone.find_project(kwargs.pop('tenant_name', None),
                                       keystone)
-    rules = kwargs.pop('rules', None)
+    # if no tenant given, use regular nova auth
+    # if teant given, create temp user to add security group
+    if not tenant:
+        return __create_security_group(nova, **kwargs)
     with os_keystone.temp_user(tenant, keystone) as (user, user_password):
         nova = nova_v1.Client(user.name,
                               user_password,
                               tenant.name,
                               auth_url)
-        group_id = find_sec_group(nova, kwargs['name'])
-        if group_id:
-            log.debug('Group already exists:%s' % group_id)
-        else:
-            try:
-                group = nova.security_groups.create(**kwargs)
-                group_id = group.id # pylint: disable=no-member
-                log.info('Created security group:%s' % group_id)
-            except nova_exceptions.BadRequest:
-                # Group already exists
-                group_id = find_sec_group(nova, kwargs.pop('name', None))
-                log.info('Group already exists:%s' % group_id)
-            except nova_exceptions.ClientException, e:
-                log.error('Cannot create security group:%s' % e)
-                return
-        for rule in rules:
-            try:
-                r = nova.security_group_rules.create(group_id, **rule)
-                log.info("Created new rule:%s" % str(r))
-            except nova_exceptions.BadRequest:
-                log.info('Cannot create rule, already exists:%s' % rule)
-                continue
-            except nova_exceptions.CommandError, e:
-                log.error('Cannot create rule:%s' % e)
-                continue
+        return __create_security_group(nova, **kwargs)
+
+def __create_security_group(nova, **kwargs):
+    rules = kwargs.pop('rules', None)
+    group_id = find_sec_group(nova, kwargs['name'])
+    if group_id:
+        log.debug('Group already exists:%s' % group_id)
+    else:
+        try:
+            group = nova.security_groups.create(**kwargs)
+            group_id = group.id # pylint: disable=no-member
+            log.info('Created security group:%s' % group_id)
+        except nova_exceptions.BadRequest:
+            # Group already exists
+            group_id = find_sec_group(nova, kwargs.pop('name', None))
+            log.info('Group already exists:%s' % group_id)
+        except nova_exceptions.ClientException, e:
+            log.error('Cannot create security group:%s' % e)
+            return
+    for rule in rules:
+        try:
+            r = nova.security_group_rules.create(group_id, **rule)
+            log.info("Created new rule:%s" % str(r))
+        except nova_exceptions.BadRequest:
+            log.info('Cannot create rule, already exists:%s' % rule)
+            continue
+        except nova_exceptions.CommandError, e:
+            log.error('Cannot create rule:%s' % e)
+            continue
 
 def create_keypair(nova, **kwargs):
     log.debug('Creating keypair:%s' % kwargs)
