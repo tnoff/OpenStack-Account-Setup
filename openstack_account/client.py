@@ -2,6 +2,7 @@ from openstack_account import schema
 from openstack_account import settings
 from openstack_account import utils
 
+from openstack_account.openstack import cinder as os_cinder
 from openstack_account.openstack import keystone as os_keystone
 from openstack_account.openstack import neutron as os_neutron
 from openstack_account.openstack import nova as os_nova
@@ -77,12 +78,6 @@ class AccountSetup(object):
                 return im
         return None
 
-    def __find_volume(self, cinder, name):
-        for volume in cinder.volumes.list():
-            if volume.name == name:
-                return volume
-        return None
-
     def create_user(self, **args):
         return os_keystone.create_user(self.keystone, **args)
 
@@ -96,10 +91,7 @@ class AccountSetup(object):
         return os_nova.set_nova_quota(self.nova, self.keystone, **args)
 
     def set_cinder_quota(self, **args):
-        log.info('Setting cinder quotas:%s' % args)
-        project = os_keystone.find_project(args.pop('tenant_name', None),
-                                           self.keystone)
-        self.cinder.quotas.update(project.id, **args)
+        return os_cinder.set_cinder_quota(self.cinder, self.keystone, **args)
 
     def create_security_group(self, **args):
         return os_nova.create_security_group(self.nova, self.keystone,
@@ -160,23 +152,7 @@ class AccountSetup(object):
         return os_neutron.create_router(self.neutron, self.keystone, **args)
 
     def create_volume(self, **args):
-        log.debug('Create volume:%s' % args)
-        name = args.pop('name', None)
-        wait = args.pop('wait', settings.VOLUME_WAIT)
-        timeout = args.pop('timeout', settings.VOLUME_WAIT_TIMEOUT)
-        interval = args.pop('interval', settings.VOLUME_WAIT_INTERVAL)
-        volume = self.__find_volume(self.cinder, name)
-        # Cinder uses 'display name' because fuck convention i suppose
-        args['display_name'] = name
-        if volume:
-            log.info('Volume already exists:%s' % volume.id)
-        else:
-            volume = self.cinder.volumes.create(**args)
-            log.info('Volume created:%s' % volume.id)
-        if wait:
-            log.info('Waiting for volume:%s' % volume.id)
-            utils.wait_status(self.cinder.volumes.get, volume.id,
-                              ['available'], ['error'], interval, timeout)
+        return os_cinder.create_volume(self.cinder, **args)
 
     def create_server(self, **args):
         return os_nova.create_server(self.nova, **args)
