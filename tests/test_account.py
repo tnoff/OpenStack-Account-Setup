@@ -7,6 +7,7 @@ from openstack_account.exceptions import OpenStackAccountError
 
 from tests import settings
 from tests.data import flavors as flavor_data
+from tests.data import glance as glance_data
 from tests.data import keypair as keypair_data
 from tests.data import keystone as keystone_data
 from tests.data import neutron as neutron_data
@@ -17,6 +18,12 @@ def find_tenant(keystone, tenant_name):
     for tenant in keystone.tenants.list():
         if tenant.name == tenant_name:
             return tenant.id
+    return None
+
+def find_image(glance, image_name):
+    for im in glance.images.list():
+        if im.name == image_name:
+            return im
     return None
 
 class TestOSAccount(unittest.TestCase):
@@ -89,3 +96,15 @@ class TestOSAccount(unittest.TestCase):
     def test_neutron(self):
         config_data = neutron_data.DATA
         self.client.setup_config(config_data)
+
+    def test_glance(self):
+        config_data = glance_data.DATA
+        self.client.setup_config(config_data)
+
+        # check updating images works
+        config_data[0]['images'][0]['is_public'] = True
+        self.client.setup_config(config_data)
+
+        image = find_image(self.client.glance,
+                           config_data[0]['images'][0]['name'])
+        self.assertTrue(image.is_public)
