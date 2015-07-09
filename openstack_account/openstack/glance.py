@@ -28,6 +28,6 @@ def create_image(glance, **args):
         image.update(data=open(file_location, 'rb'))
     log.info('Created image:%s' % image.id)
     if wait:
-        log.info('Waiting for image:%s' % image.id)
+        log.info('Waiting for image:%s, timeout:%s' % (image.id, timeout))
         utils.wait_status(glance.images.get, image.id, ['active'],
                           ['error'], interval, timeout)
