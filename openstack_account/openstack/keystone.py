@@ -12,8 +12,6 @@ log = logging.getLogger(__name__)
 def temp_user(tenant, keystone):
     # If tenant given is None, raise Error
     if not tenant:
-        user = None
-        password = None
         raise OpenStackAccountError("No tenant given")
     # Create temp user that is authorized to tenant
     log.debug('Creating temp user for tenant:%s' % tenant.id)
@@ -91,6 +89,8 @@ def create_project(keystone, **kwargs):
         # Update data with whats in args
         project = keystone.tenants.update(project.id, **kwargs)
         log.info("Project updated:%s" % project.id)
+    if (user or role) and not (user and role):
+        raise OpenStackAccountError("Need user and role to add to project:%s" % kwargs)
     if user and role:
         try:
             project.add_user(user.id, role.id)

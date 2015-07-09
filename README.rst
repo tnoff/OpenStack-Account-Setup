@@ -63,3 +63,12 @@ Python Scripting
 Sample Config
 =============
 See sample config YAML file
+
+=======
+Testing
+=======
+I concluded the best way to test this was to actually use it against a cluster
+and have the tests check that the resources that should be there, are there.
+
+Use ``tests/settings.py`` to specify which cluster to use. Neutron should
+be installed on the cluster for tests to pass.
