@@ -9,6 +9,7 @@ from tests import settings
 from tests.data import flavors as flavor_data
 from tests.data import keypair as keypair_data
 from tests.data import keystone as keystone_data
+from tests.data import neutron as neutron_data
 from tests.data import quotas as quota_data
 from tests.data import security_groups as sec_data
 
@@ -84,3 +85,7 @@ class TestOSAccount(unittest.TestCase):
         os.chmod(config_data[0]['keypairs'][0]['file'], 0600)
         self.client.setup_config(config_data)
         os.remove(config_data[0]['keypairs'][0]['file'])
+
+    def test_neutron(self):
+        config_data = neutron_data.DATA
+        self.client.setup_config(config_data)
