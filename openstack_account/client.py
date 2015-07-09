@@ -1,8 +1,7 @@
 from openstack_account import schema
-from openstack_account import settings
-from openstack_account import utils
 
 from openstack_account.openstack import cinder as os_cinder
+from openstack_account.openstack import glance as os_glance
 from openstack_account.openstack import keystone as os_keystone
 from openstack_account.openstack import neutron as os_neutron
 from openstack_account.openstack import nova as os_nova
@@ -41,7 +40,7 @@ SECTION_IGNORE = [
     'os_auth_url',
 ]
 
-class AccountSetup(object):
+class AccountSetup(object): #pylint: disable=too-many-instance-attributes
     def __init__(self, username, password, tenant_name, auth_url):
         self.os_username = username
         self.os_password = password
@@ -71,12 +70,6 @@ class AccountSetup(object):
         token = self.keystone.auth_token
         image_endpoint = self.keystone.service_catalog.url_for(service_type='image')
         self.glance = glance_client('1', endpoint=image_endpoint, token=token)
-
-    def __find_image(self, glance, name):
-        for im in glance.images.list():
-            if im.name == name:
-                return im
-        return None
 
     def create_user(self, **args):
         return os_keystone.create_user(self.keystone, **args)
@@ -122,25 +115,7 @@ class AccountSetup(object):
             log.error('Error creating source file:%s' % file_name)
 
     def create_image(self, **args):
-        log.debug('Creating image:%s' % args)
-        wait = args.pop('wait', settings.IMAGE_WAIT)
-        timeout = args.pop('timeout', settings.IMAGE_WAIT_TIMEOUT)
-        interval = args.pop('wait_interval', settings.IMAGE_WAIT_INTERVAL)
-        # By default use glance that already exists
-        image_name = args.get('name', None)
-        image = self.__find_image(self.glance, image_name)
-        if image:
-            log.info('Image exists:%s' % image.id)
-            return
-        file_location = args.pop('file', None)
-        image = self.glance.images.create(**args)
-        if file_location:
-            image.update(data=open(file_location, 'rb'))
-        log.info('Created image:%s' % image.id)
-        if wait:
-            log.info('Waiting for image:%s' % image.id)
-            utils.wait_status(self.glance.images.get, image.id, ['active'],
-                              ['error'], interval, timeout)
+        return os_glance.create_image(self.glance, **args)
 
     def create_network(self, **args):
         return os_neutron.create_network(self.neutron, self.keystone, **args)
