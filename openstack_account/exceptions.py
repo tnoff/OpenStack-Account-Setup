@@ -1,0 +1,2 @@
+class OpenStackAccountError(Exception):
+    pass
