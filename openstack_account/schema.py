@@ -320,99 +320,75 @@ SCHEMA = {
                     "required": ["name"],
                     "additionalProperties" : True
                 }
-            }
-        },
-        "routers": {
-            "title": "routers",
-            "type": "array",
-            "items": {
-                "title": "router",
-                "type": "object",
-                "properties": {
-                    "name": {
-                        "type": "string"
+            },
+            "volumes": {
+                "title": "volumes",
+                "type" : "array",
+                "items": {
+                    "title": "volume",
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "size": {
+                            "type": "integer"
+                        },
+                        "wait": {
+                            "type": "boolean",
+                            "default": settings.VOLUME_WAIT
+                        },
+                        "timeout": {
+                            "type": "integer",
+                            "default": settings.VOLUME_WAIT_TIMEOUT
+                        },
+                        "wait_interval": {
+                            "type": "integer",
+                            "default": settings.VOLUME_WAIT_INTERVAL
+                        }
                     },
-                    "external_network": {
-                        "type": "string"
+                    "required": ["name", "size"],
+                    "additionalProperties": True
+                }
+            },
+            "servers": {
+                "title": "servers",
+                "type": "array",
+                "items": {
+                    "title": "server",
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "flavor_name": {
+                            "type": "string"
+                        },
+                        "flavor": {
+                            "type": "string"
+                        },
+                        "image_name": {
+                            "type": "string"
+                        },
+                        "image": {
+                            "type": "string"
+                        },
+                        "wait": {
+                            "type": "boolean",
+                            "default": settings.SERVER_WAIT
+                        },
+                        "timeout": {
+                            "type": "integer",
+                            "default": settings.SERVER_WAIT_TIMEOUT
+                        },
+                        "wait_interval": {
+                            "type": "integer",
+                            "default": settings.SERVER_WAIT_INTERVAL
+                        }
                     },
-                    "internal_subnet": {
-                        "type": "string"
-                    },
-                    "tenant_name": {
-                        "type": "string"
-                    }
-                },
-                "required": ["name"],
-                "additionalProperties" : True
-            }
-        },
-        "volumes": {
-            "title": "volumes",
-            "type" : "array",
-            "items": {
-                "title": "volume",
-                "type": "object",
-                "properties": {
-                    "name": {
-                        "type": "string"
-                    },
-                    "size": {
-                        "type": "integer"
-                    },
-                    "wait": {
-                        "type": "boolean",
-                        "default": settings.VOLUME_WAIT
-                    },
-                    "timeout": {
-                        "type": "integer",
-                        "default": settings.VOLUME_WAIT_TIMEOUT
-                    },
-                    "wait_interval": {
-                        "type": "integer",
-                        "default": settings.VOLUME_WAIT_INTERVAL
-                    }
-                },
-                "required": ["name", "size"],
-                "additionalProperties": True
-            }
-        },
-        "servers": {
-            "title": "servers",
-            "type": "array",
-            "items": {
-                "title": "server",
-                "type": "object",
-                "properties": {
-                    "name": {
-                        "type": "string"
-                    },
-                    "flavor_name": {
-                        "type": "string"
-                    },
-                    "flavor": {
-                        "type": "string"
-                    },
-                    "image_name": {
-                        "type": "string"
-                    },
-                    "image": {
-                        "type": "string"
-                    },
-                    "wait": {
-                        "type": "boolean",
-                        "default": settings.SERVER_WAIT
-                    },
-                    "timeout": {
-                        "type": "integer",
-                        "default": settings.SERVER_WAIT_TIMEOUT
-                    },
-                    "wait_interval": {
-                        "type": "integer",
-                        "default": settings.SERVER_WAIT_INTERVAL
-                    }
-                },
-                "required": ["name"],
-                "additionalProperties": True
+                    "required": ["name"],
+                    "additionalProperties": True
+                }
             }
         }
     }

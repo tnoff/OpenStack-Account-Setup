@@ -9,7 +9,7 @@ log = logging.getLogger(__name__)
 
 def find_volume(cinder, name):
     for volume in cinder.volumes.list():
-        if volume.name == name:
+        if volume.display_name == name:
             return volume
     return None
 

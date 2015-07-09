@@ -6,6 +6,7 @@ from openstack_account.client import AccountSetup
 from openstack_account.exceptions import OpenStackAccountError
 
 from tests import settings
+from tests.data import cinder as cinder_data
 from tests.data import flavors as flavor_data
 from tests.data import glance as glance_data
 from tests.data import keypair as keypair_data
@@ -108,3 +109,10 @@ class TestOSAccount(unittest.TestCase):
         image = find_image(self.client.glance,
                            config_data[0]['images'][0]['name'])
         self.assertTrue(image.is_public)
+
+    def test_cinder(self):
+        config_data = cinder_data.DATA
+        self.client.setup_config(config_data)
+
+        volume_names = [i.display_name for i in self.client.cinder.volumes.list()]
+        self.assertTrue(config_data[0]['volumes'][0]['name'] in volume_names)
