@@ -1,11 +1,14 @@
+from Crypto.PublicKey import RSA
+import os
 import unittest
 
 from openstack_account.client import AccountSetup
 from openstack_account.exceptions import OpenStackAccountError
 
 from tests import settings
-from tests.data import keystone as keystone_data
 from tests.data import flavors as flavor_data
+from tests.data import keypair as keypair_data
+from tests.data import keystone as keystone_data
 from tests.data import quotas as quota_data
 from tests.data import security_groups as sec_data
 
@@ -71,3 +74,13 @@ class TestOSAccount(unittest.TestCase):
         # make sure it works without projects as well
         config_data.pop(0)
         self.client.setup_config(config_data)
+
+    def test_keypair(self):
+        config_data = keypair_data.DATA
+        key = RSA.generate(2048)
+        pubkey = key.publickey()
+        with open(config_data[0]['keypairs'][0]['file'], 'w') as f:
+            f.write(pubkey.exportKey('OpenSSH'))
+        os.chmod(config_data[0]['keypairs'][0]['file'], 0600)
+        self.client.setup_config(config_data)
+        os.remove(config_data[0]['keypairs'][0]['file'])

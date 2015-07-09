@@ -14,6 +14,8 @@ setuptools.setup(
         'python-neutronclient>=2.3.11',
         'python-novaclient >= 2.18.1',
 
+        'nose >= 1.3.7',
+        'pycrypto >= 2.6.1',
         'PyYAML >= 3.11',
     ],
     entry_points={
