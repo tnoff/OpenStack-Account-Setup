@@ -373,6 +373,19 @@ SCHEMA = {
                         "image": {
                             "type": "string"
                         },
+                        "nics": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "network_name": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": ["network_name"],
+                                "additionalProperties": True
+                            }
+                        },
                         "wait": {
                             "type": "boolean",
                             "default": settings.SERVER_WAIT

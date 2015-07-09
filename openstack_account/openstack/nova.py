@@ -2,6 +2,7 @@ from openstack_account import settings
 from openstack_account import utils
 from openstack_account.exceptions import OpenStackAccountError
 from openstack_account.openstack import keystone as os_keystone
+from openstack_account.openstack import neutron as os_neutron
 
 from novaclient.v1_1 import client as nova_v1 #pylint: disable=no-name-in-module
 from novaclient import exceptions as nova_exceptions
@@ -110,7 +111,7 @@ def create_keypair(nova, **kwargs):
     except nova_exceptions.Conflict:
         log.info('Keypair already exists:%s' % kwargs['name'])
 
-def create_server(nova, **kwargs):
+def create_server(nova, neutron, **kwargs):
     log.debug('Create server:%s' % kwargs)
     name = kwargs.get('name')
     wait = kwargs.pop('wait', settings.SERVER_WAIT)
@@ -123,6 +124,14 @@ def create_server(nova, **kwargs):
     image_name = kwargs.pop('image_name', None)
     if image_name:
         kwargs['image'] = find_image(nova, image_name)
+    # build nic with correct network uuid if needed
+    nics = kwargs.pop('nics', None)
+    kwargs['nics'] = []
+    for nic in nics:
+        name = nic.pop('network_name')
+        network = os_neutron.find_network(neutron, name, None)
+        nic['net-id'] = network['id']
+        kwargs['nics'].append(nic)
     # Check for and build server
     server = find_server(nova, name)
     if server:

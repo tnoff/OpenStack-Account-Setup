@@ -14,6 +14,7 @@ from tests.data import keystone as keystone_data
 from tests.data import neutron as neutron_data
 from tests.data import quotas as quota_data
 from tests.data import security_groups as sec_data
+from tests.data import server as server_data
 
 def find_tenant(keystone, tenant_name):
     for tenant in keystone.tenants.list():
@@ -116,3 +117,7 @@ class TestOSAccount(unittest.TestCase):
 
         volume_names = [i.display_name for i in self.client.cinder.volumes.list()]
         self.assertTrue(config_data[0]['volumes'][0]['name'] in volume_names)
+
+    def test_server(self):
+        config_data = server_data.DATA
+        self.client.setup_config(config_data)

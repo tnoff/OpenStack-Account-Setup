@@ -43,7 +43,11 @@ def create_network(neutron, keystone, **args):
     log.debug('Creating network:%s' % args)
     tenant = os_keystone.find_project(args.pop('tenant_name', None),
                                       keystone)
-    net = find_network(neutron, args['name'], tenant.id)
+    if not tenant:
+        tenant_id = None
+    else:
+        tenant_id = tenant.id
+    net = find_network(neutron, args['name'], tenant_id)
     if net:
         log.info('Network already exists:%s' % net['id'])
         return
@@ -56,9 +60,13 @@ def create_subnet(neutron, keystone, **args):
     log.debug('Creating subnet:%s' % args)
     tenant = os_keystone.find_project(args.pop('tenant_name', None),
                                       keystone)
-    network = find_network(neutron, args.pop('network', None), tenant.id)
+    if not tenant:
+        tenant_id = None
+    else:
+        tenant_id = tenant.id
+    network = find_network(neutron, args.pop('network', None), tenant_id)
     args['network_id'] = network['id']
-    sub = find_subnet(neutron, args['name'], tenant.id, network['id'])
+    sub = find_subnet(neutron, args['name'], tenant_id, network['id'])
     if sub:
         log.info('Subnet already exists:%s' % sub['id'])
         return
