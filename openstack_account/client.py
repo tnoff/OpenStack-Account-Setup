@@ -101,7 +101,6 @@ class AccountSetup(object): #pylint: disable=too-many-instance-attributes
         user = args.pop('user', None)
         stringy = '#!/bin/bash\n'
         stringy += 'export OS_USERNAME="%s"\n' % user
-        stringy += 'export OS_TENANT_ID="%s"\n' % tenant.id
         stringy += 'export OS_TENANT_NAME="%s"\n' % tenant.name
         stringy += 'export OS_AUTH_URL="%s"\n' % self.os_auth_url
         stringy += 'echo "Please enter your OpenStack Password:"\n'
