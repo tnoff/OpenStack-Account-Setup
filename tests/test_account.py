@@ -6,6 +6,8 @@ from openstack_account.exceptions import OpenStackAccountError
 from tests import settings
 from tests.data import keystone as keystone_data
 from tests.data import flavors as flavor_data
+from tests.data import quotas as quota_data
+
 class TestOSAccount(unittest.TestCase):
     def setUp(self):
         self.client = AccountSetup(settings.OS_USERNAME,
@@ -42,3 +44,17 @@ class TestOSAccount(unittest.TestCase):
         flavor_names = [i.name for i in self.client.nova.flavors.list()]
         for flavor in config_data[0]['flavors']:
             self.assertTrue(flavor['name'] in flavor_names)
+
+    def test_quotas(self):
+        config_data = quota_data.DATA
+        self.client.setup_config(config_data)
+
+        # Delete tenant, remove from data, make sure exception thrown
+        tenant_id = None
+        for tenant in self.client.keystone.tenants.list():
+            if tenant.name == config_data[0]['projects'][0]['name']:
+                tenant_id = tenant.id
+        self.client.keystone.tenants.delete(tenant_id)
+        config_data.pop(0)
+        self.assertRaises(OpenStackAccountError,
+                          self.client.setup_config, config_data)
