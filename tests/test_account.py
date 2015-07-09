@@ -5,7 +5,7 @@ from openstack_account.exceptions import OpenStackAccountError
 
 from tests import settings
 from tests.data import keystone as keystone_data
-
+from tests.data import flavors as flavor_data
 class TestOSAccount(unittest.TestCase):
     def setUp(self):
         self.client = AccountSetup(settings.OS_USERNAME,
@@ -35,3 +35,10 @@ class TestOSAccount(unittest.TestCase):
         config_data[0]['projects'][0].pop('user')
         self.assertRaises(OpenStackAccountError,
                           self.client.setup_config, config_data)
+
+    def test_flavors(self):
+        config_data = flavor_data.DATA
+        self.client.setup_config(config_data)
+        flavor_names = [i.name for i in self.client.nova.flavors.list()]
+        for flavor in config_data[0]['flavors']:
+            self.assertTrue(flavor['name'] in flavor_names)

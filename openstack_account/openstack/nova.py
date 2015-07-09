@@ -41,8 +41,8 @@ def create_flavor(nova, **kwargs):
         log.info("Created flavor:%s" % flavor.id)
     except nova_exceptions.Conflict:
         # Flavor already exists
-        flavor = find_flavor(nova, kwargs.pop('name', None))
-        log.info('Flavor already exists:%s' % flavor.id)
+        flavor_id = find_flavor(nova, kwargs.pop('name', None))
+        log.info('Flavor already exists:%s' % flavor_id)
 
 def set_nova_quota(nova, keystone, **kwargs):
     log.debug('Setting nova quotas:%s' % kwargs)
