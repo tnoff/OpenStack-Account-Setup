@@ -61,6 +61,9 @@ def create_user(keystone, **kwargs):
     try:
         user = keystone.users.create(**kwargs)
         log.info('User created:%s' % user)
+    except keystone_exceptions.Forbidden as error:
+        log.error('Admin credentials required for user creation:%s' % str(error))
+        return None
     except keystone_exceptions.Conflict:
         # User allready exists
         user = find_user(kwargs['name'], keystone)
