@@ -81,8 +81,7 @@ class AccountSetup(object): #pylint: disable=too-many-instance-attributes
         return os_cinder.set_cinder_quota(self.cinder, self.keystone, **args)
 
     def create_security_group(self, **args):
-        return os_nova.create_security_group(self.nova, self.keystone,
-                                             self.os_auth_url, **args)
+        return os_nova.create_security_group(self.nova, **args)
 
     def create_keypair(self, **args):
         return os_nova.create_keypair(self.nova, **args)

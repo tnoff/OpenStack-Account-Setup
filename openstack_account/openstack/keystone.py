@@ -1,36 +1,8 @@
-from openstack_account import utils
-from openstack_account.exceptions import OpenStackAccountError
-
 from keystoneclient.openstack.common.apiclient import exceptions as keystone_exceptions
 
-from contextlib import contextmanager
 import logging
 
 log = logging.getLogger(__name__)
-
-@contextmanager
-def temp_user(tenant, keystone):
-    # If tenant given is None, raise Error
-    if not tenant:
-        raise OpenStackAccountError("No tenant given")
-    # Create temp user that is authorized to tenant
-    log.debug('Creating temp user for tenant:%s' % tenant.id)
-    username = utils.random_string(prefix='user-')
-    password = utils.random_string(length=30)
-    user = keystone.users.create(name=username,
-                                 password=password,
-                                 email=None)
-    log.debug('Created temp user:%s for tenant:%s' % (user.id, tenant.id))
-    member_role = find_role('_member_', keystone)
-    # stupid keystone is stupid
-    if not member_role:
-        member_role = find_role('member', keystone)
-    tenant.add_user(user.id, member_role.id)
-    try:
-        yield user, password
-    finally:
-        log.debug('Deleting temp user:%s' % user.id)
-        keystone.users.delete(user.id)
 
 def find_user(name, keystone):
     if not name:

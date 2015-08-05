@@ -119,9 +119,6 @@ SCHEMA = {
                             },
                         },
                     },
-                    "tenant_name": {
-                        "type": "string"
-                    },
                     "name": {
                         "type": "string"
                     },

@@ -1,10 +1,5 @@
 DATA = [
     {
-        "project": {
-            "name": "winterfell",
-        },
-    },
-    {
         "security_group": {
             "rules": [
                 {
@@ -14,7 +9,6 @@ DATA = [
                     "ip_protocol": "tcp"
                 }
             ],
-            "tenant_name": "winterfell",
             "name": "ssh",
             "description": "Simply ssh port group"
         }

@@ -49,7 +49,6 @@
   security_group:
       name: 'ssh port'
       description: Simply ssh port group
-      tenant_name: 'winterfell' # Only use tenant_name option as admin
       rules:
         - from_port: 22
           to_port: 22

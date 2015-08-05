@@ -4,7 +4,6 @@ from openstack_account.exceptions import OpenStackAccountError
 from openstack_account.openstack import keystone as os_keystone
 from openstack_account.openstack import neutron as os_neutron
 
-from novaclient.v1_1 import client as nova_v1 #pylint: disable=no-name-in-module
 from novaclient import exceptions as nova_exceptions
 
 import logging
@@ -60,22 +59,8 @@ def set_nova_quota(nova, keystone, **kwargs):
         log.error('Cannot set quotas:%s' % str(e))
     return project.id
 
-def create_security_group(nova, keystone, auth_url, **kwargs):
+def create_security_group(nova, **kwargs):
     log.debug('Creating security group:%s' % kwargs)
-    tenant = os_keystone.find_project(kwargs.pop('tenant_name', None),
-                                      keystone)
-    # if no tenant given, use regular nova auth
-    # if teant given, create temp user to add security group
-    if not tenant:
-        return __create_security_group(nova, **kwargs)
-    with os_keystone.temp_user(tenant, keystone) as (user, user_password):
-        nova = nova_v1.Client(user.name,
-                              user_password,
-                              tenant.name,
-                              auth_url)
-        return __create_security_group(nova, **kwargs)
-
-def __create_security_group(nova, **kwargs):
     rules = kwargs.pop('rules', None)
     group_id = find_sec_group(nova, kwargs['name'])
     if group_id:
