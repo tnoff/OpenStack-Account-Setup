@@ -18,27 +18,21 @@ import logging
 log = logging.getLogger(__name__)
 
 SECTION_SCHEMA = {
-    'users' : 'create_user',
-    'projects':  'create_project',
-    'flavors' : 'create_flavor',
-    'nova_quotas' : 'set_nova_quota',
-    'cinder_quotas' : 'set_cinder_quota',
-    'security_groups' : 'create_security_group',
-    'keypairs' : 'create_keypair',
-    'source_files' : 'create_source_file',
-    'images' : 'create_image',
-    'networks' : 'create_network',
-    'subnets' : 'create_subnet',
-    'routers' : 'create_router',
-    'volumes' : 'create_volume',
-    'servers' : 'create_server',
+    'user' : 'create_user',
+    'project':  'create_project',
+    'flavor' : 'create_flavor',
+    'nova_quota' : 'set_nova_quota',
+    'cinder_quota' : 'set_cinder_quota',
+    'security_group' : 'create_security_group',
+    'keypair' : 'create_keypair',
+    'source_file' : 'create_source_file',
+    'image' : 'create_image',
+    'network' : 'create_network',
+    'subnet' : 'create_subnet',
+    'router' : 'create_router',
+    'volume' : 'create_volume',
+    'server' : 'create_server',
 }
-SECTION_IGNORE = [
-    'os_username',
-    'os_password',
-    'os_tenant_name',
-    'os_auth_url',
-]
 
 class AccountSetup(object): #pylint: disable=too-many-instance-attributes
     def __init__(self, username, password, tenant_name, auth_url):
@@ -131,27 +125,30 @@ class AccountSetup(object): #pylint: disable=too-many-instance-attributes
     def create_server(self, **args):
         return os_nova.create_server(self.nova, self.neutron, **args)
 
-    def __set_clients(self, **config_data):
+    def __set_clients(self, username, password, tenant_name, auth_url):
         # Allow for the override of openstack auth args in each action
         # New args will be applied for every section in that action
-        username = config_data.pop('os_username', self.os_username)
-        password = config_data.pop('os_password', self.os_password)
-        tenant_name = config_data.pop('os_tenant_name', self.os_tenant_name)
-        auth_url = config_data.pop('os_auth_url', self.os_auth_url)
-        self.__reset_clients(username, password, tenant_name, auth_url)
+        username = username or self.os_username
+        password = password or self.os_password
+        tenant_name = tenant_name or self.os_tenant_name
+        auth_url = auth_url or self.os_auth_url
+        self.__reset_clients(username, password, tenant_name, auth_url,)
 
     def setup_config(self, config):
         log.debug('Checking schema')
         validate(config, schema.SCHEMA)
+        # schema is a list of items
+        # .. we'll call these items 'actions'
         for action in config:
-            self.__set_clients(**action)
-            # For each item listed
-            for section in action.keys():
-                if section in SECTION_IGNORE:
-                    log.debug("Ignoring section:%s" % section)
-                    continue
-                # Do sections randomly
-                for item in action[section]:
-                    # For item in section
-                    method = getattr(self, SECTION_SCHEMA[section])
-                    method(**item)
+            # for each item reset the openstack clients used
+            # .. take either the arguments provided by the user
+            # .. or the arguments that are used when authenticating
+            # .. the initial client
+            self.__set_clients(action.pop('os_username', None),
+                               action.pop('os_password', None),
+                               action.pop('os_tenant_name', None),
+                               action.pop('os_auth_url', None),)
+
+            for key, data in action.iteritems():
+                method = getattr(self, SECTION_SCHEMA[key])
+                method(**data)

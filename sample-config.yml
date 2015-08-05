@@ -5,51 +5,49 @@
 # Each section can have a list of items that will be created in order
 
 
-# action
-- users: # section
-    - name: 'arya' # item
+- user:
+      name: 'arya'
       password: 'joffrey_sucks'
       email: None
+  user:
+     name: 'gentry'
+     password: 'mah_helm'
+     email: None
 
-    - name: 'gentry'
-      password: 'mah_helm'
-      email: None
-
-- projects:
-    - name: 'winterfell'
+- project:
+      name: 'winterfell'
       description: 'winter is coming'
       # Add user with roles
       role: 'admin'
       user: 'arya'
 
-- flavors:
-    - name: 'kraken'
+- flavor:
+      name: 'kraken'
       ram: 4096
       vcpus: 4
       disk: 0
 
-- nova_quotas:
+- nova_quota:
     # Will find tenant by name
     # Any valid arg can be used here
     # All keys (besides tenant name) passed directly into the query
-
-    - tenant_name: 'winterfell'
+      tenant_name: 'winterfell'
       instances: 20
       ram: 5120000
       cores: 80
 
-- cinder_quotas:
+  cinder_quota:
     # Will find tenant by name
     # Any valid arg can be used here
     # All keys (besides tenant name) passed directly into the query
 
-    - tenant_name: 'winterfell'
+      tenant_name: 'winterfell'
       volumes: 20
       gigabytes: 1000000
 
 
-- security_groups:
-    - name: 'ssh port'
+  security_group:
+      name: 'ssh port'
       description: Simply ssh port group
       tenant_name: 'winterfell' # Only use tenant_name option as admin
       rules:
@@ -58,38 +56,37 @@
           ip_protocol: 'tcp'
           cidr: '0.0.0.0/0'
 
-- keypairs:
-    - name: 'my-public-key'
+- keypair:
+      name: 'my-public-key'
       file: '/home/user/.ssh/id_rsa.pub'
   os_username: 'arya'
   os_password: 'joffrey_sucks'
   os_tenant_name: 'winterfell'
 
-- networks:
-    - name: 'the north'
+- network :
+      name: 'the north'
       tenant_name: 'winterfell'
       shared: True
 
-- subnets:
-    - name: 'moat cailin'
+- subnet:
+      name: 'moat cailin'
       network: 'the north'
       tenant_name: 'winterfell'
       cidr: '192.168.0.0/24'
       ip_version: '4'
 
-- routers:
-    - name: 'the kingsroad'
+- router:
+      name: 'the kingsroad'
       tenant_name: 'winterfell'
       external_network: 'external'
       internal_subnet: 'moat cailin'
 
-- source_files:
-    - tenant_name: 'winterfell'
+- source_file:
+      tenant_name: 'winterfell'
       file: '/home/user/arya_openrc.sh'
       user: 'arya'
 
-- images:
-    - tenant_name: 'winterfell' # Only use tenant_name option as admin
+- image:
       # Whether 'file' (uploaded from local file) or 'copy_from' (copied from URL) can be set
       name: 'Debian 7.3'
       copy_from: 'http://www.change-me.org/debian-7.3.img'
@@ -101,14 +98,14 @@
       wait: True
       timeout: 1200
 
-- volumes:
-    - name: 'weirwood'
+- volume:
+      name: 'weirwood'
       size: 20
       wait: True
       timeout: 3600
 
-- servers:
-    - name: 'ice'
+- server:
+      name: 'ice'
       flavor_name: 'kraken'
       image_name: 'Debian 7.3'
       wait: True
