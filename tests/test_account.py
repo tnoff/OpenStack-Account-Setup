@@ -35,35 +35,27 @@ class TestOSAccount(unittest.TestCase):
                                    settings.OS_TENANT_NAME,
                                    settings.OS_AUTH_URL,)
 
-    def test_keystone(self):
+    def test_keystone_simple(self):
         config_data = keystone_data.DATA
         self.client.setup_config(config_data)
         user_names = [i.name for i in self.client.keystone.users.list()]
         tenant_names = [i.name for i in self.client.keystone.tenants.list()]
-        for user in config_data[0]['users']:
-            self.assertTrue(user['name'] in user_names)
-        for tenant in config_data[0]['projects']:
-            self.assertTrue(tenant['name'] in tenant_names)
+        self.assertTrue(config_data[0]['user']['name'] in user_names)
+        self.assertTrue(config_data[1]['project']['name'] in tenant_names)
 
-        # make sure updating a password works
-        config_data[0]['users'][0]['password'] = 'supernew'
+    def test_keystone_update_password(self):
+        config_data = keystone_data.DATA
         self.client.setup_config(config_data)
 
-        # remove role/ then user from project data, make sure exception raised
-        role = config_data[0]['projects'][0].pop('role')
-        self.assertRaises(OpenStackAccountError,
-                          self.client.setup_config, config_data)
-        config_data[0]['projects'][0]['role'] = role
-        config_data[0]['projects'][0].pop('user')
-        self.assertRaises(OpenStackAccountError,
-                          self.client.setup_config, config_data)
+        # make sure updating a password works
+        config_data[0]['user']['password'] = 'supernew'
+        self.client.setup_config(config_data)
 
     def test_flavors(self):
         config_data = flavor_data.DATA
         self.client.setup_config(config_data)
         flavor_names = [i.name for i in self.client.nova.flavors.list()]
-        for flavor in config_data[0]['flavors']:
-            self.assertTrue(flavor['name'] in flavor_names)
+        self.assertTrue(config_data[0]['flavor']['name'] in flavor_names)
 
     def test_quotas(self):
         config_data = quota_data.DATA
@@ -71,7 +63,7 @@ class TestOSAccount(unittest.TestCase):
 
         # Delete tenant, remove from data, make sure exception thrown
         tenant_id = find_tenant(self.client.keystone,
-                                config_data[0]['projects'][0]['name'])
+                                config_data[0]['project']['name'])
         self.client.keystone.tenants.delete(tenant_id)
         config_data.pop(0)
         self.assertRaises(OpenStackAccountError,
@@ -89,11 +81,11 @@ class TestOSAccount(unittest.TestCase):
         config_data = keypair_data.DATA
         key = RSA.generate(2048)
         pubkey = key.publickey()
-        with open(config_data[0]['keypairs'][0]['file'], 'w') as f:
+        with open(config_data[0]['keypair']['file'], 'w') as f:
             f.write(pubkey.exportKey('OpenSSH'))
-        os.chmod(config_data[0]['keypairs'][0]['file'], 0600)
+        os.chmod(config_data[0]['keypair']['file'], 0600)
         self.client.setup_config(config_data)
-        os.remove(config_data[0]['keypairs'][0]['file'])
+        os.remove(config_data[0]['keypair']['file'])
 
     def test_neutron(self):
         config_data = neutron_data.DATA
@@ -104,11 +96,11 @@ class TestOSAccount(unittest.TestCase):
         self.client.setup_config(config_data)
 
         # check updating images works
-        config_data[0]['images'][0]['is_public'] = True
+        config_data[0]['image']['is_public'] = True
         self.client.setup_config(config_data)
 
         image = find_image(self.client.glance,
-                           config_data[0]['images'][0]['name'])
+                           config_data[0]['image']['name'])
         self.assertTrue(image.is_public)
 
     def test_cinder(self):
@@ -116,7 +108,7 @@ class TestOSAccount(unittest.TestCase):
         self.client.setup_config(config_data)
 
         volume_names = [i.display_name for i in self.client.cinder.volumes.list()]
-        self.assertTrue(config_data[0]['volumes'][0]['name'] in volume_names)
+        self.assertTrue(config_data[0]['volume']['name'] in volume_names)
 
     def test_server(self):
         config_data = server_data.DATA
