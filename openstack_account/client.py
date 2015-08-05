@@ -106,6 +106,7 @@ class AccountSetup(object): #pylint: disable=too-many-instance-attributes
             log.debug('Created source file:%s' % file_name)
         except IOError:
             log.error('Error creating source file:%s' % file_name)
+        return file_name
 
     def create_image(self, **args):
         return os_glance.create_image(self.glance, **args)
@@ -139,6 +140,7 @@ class AccountSetup(object): #pylint: disable=too-many-instance-attributes
         validate(config, schema.SCHEMA)
         # schema is a list of items
         # .. we'll call these items 'actions'
+        return_data = {}
         for action in config:
             # for each item reset the openstack clients used
             # .. take either the arguments provided by the user
@@ -148,7 +150,9 @@ class AccountSetup(object): #pylint: disable=too-many-instance-attributes
                                action.pop('os_password', None),
                                action.pop('os_tenant_name', None),
                                action.pop('os_auth_url', None),)
-
             for key, data in action.iteritems():
                 method = getattr(self, SECTION_SCHEMA[key])
-                method(**data)
+                result = method(**data)
+                return_data.setdefault(key, [])
+                return_data[key].append(result)
+        return return_data

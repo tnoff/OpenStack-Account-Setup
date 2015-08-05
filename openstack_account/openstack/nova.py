@@ -40,10 +40,12 @@ def create_flavor(nova, **kwargs):
     try:
         flavor = nova.flavors.create(**kwargs)
         log.info("Created flavor:%s" % flavor.id)
+        return flavor.id
     except nova_exceptions.Conflict:
         # Flavor already exists
         flavor_id = find_flavor(nova, kwargs.pop('name', None))
         log.info('Flavor already exists:%s' % flavor_id)
+        return flavor_id
 
 def set_nova_quota(nova, keystone, **kwargs):
     log.debug('Setting nova quotas:%s' % kwargs)
@@ -56,6 +58,7 @@ def set_nova_quota(nova, keystone, **kwargs):
         log.info("Set quotas for project:%s" % project.id)
     except nova_exceptions.BadRequest as e:
         log.error('Cannot set quotas:%s' % str(e))
+    return project.id
 
 def create_security_group(nova, keystone, auth_url, **kwargs):
     log.debug('Creating security group:%s' % kwargs)
@@ -99,6 +102,7 @@ def __create_security_group(nova, **kwargs):
         except nova_exceptions.CommandError, e:
             log.error('Cannot create rule:%s' % e)
             continue
+    return group_id
 
 def create_keypair(nova, **kwargs):
     log.debug('Creating keypair:%s' % kwargs)
@@ -110,6 +114,7 @@ def create_keypair(nova, **kwargs):
         log.info('Created keypair:%s' % kwargs['name'])
     except nova_exceptions.Conflict:
         log.info('Keypair already exists:%s' % kwargs['name'])
+    return kwargs['name']
 
 def create_server(nova, neutron, **kwargs):
     log.debug('Create server:%s' % kwargs)
@@ -143,3 +148,4 @@ def create_server(nova, neutron, **kwargs):
         log.info("Waiting for server:%s, timeout:%s" % (server.id, timeout))
         utils.wait_status(nova.servers.get, server.id,
                           ['ACTIVE'], ['ERROR'], interval, timeout)
+    return server.id

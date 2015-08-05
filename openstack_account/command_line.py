@@ -2,6 +2,7 @@
 from openstack_account.client import AccountSetup
 
 import argparse
+import json
 import logging
 import os
 import sys
@@ -53,4 +54,5 @@ def main():
     with open(args.config_file, 'r') as f:
         log.debug('Loading configs from:%s' % args.config_file)
         config_data = yaml.load(f)
-        a.setup_config(config_data)
+        result = a.setup_config(config_data)
+        print json.dumps(result, indent=4)

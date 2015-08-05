@@ -35,3 +35,4 @@ def create_image(glance, **args):
         log.info('Waiting for image:%s, timeout:%s' % (image.id, timeout))
         utils.wait_status(glance.images.get, image.id, ['active'],
                           ['error'], interval, timeout)
+    return image.id

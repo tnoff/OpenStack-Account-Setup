@@ -75,7 +75,7 @@ def create_user(keystone, **kwargs):
             keystone.users.update_password(user.id, password)
         user = keystone.users.update(user.id, **kwargs)
         log.info("Updated user:%s" % user.id)
-    return user
+    return user.id
 
 def create_project(keystone, **kwargs):
     log.debug('Creating project:%s' % kwargs)
@@ -101,3 +101,4 @@ def create_project(keystone, **kwargs):
             # Role already exists
             log.info('Role exits user:%s to project:%s with role:%s' %
                      (user.id, project.id, role.id))
+    return project.id
