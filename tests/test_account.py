@@ -1,32 +1,13 @@
 from Crypto.PublicKey import RSA
 import os
+import time
 import unittest
 
 from openstack_account.client import AccountSetup
 from openstack_account.exceptions import OpenStackAccountError
+from openstack_account import utils
 
 from tests import settings
-from tests.data import cinder as cinder_data
-from tests.data import flavors as flavor_data
-from tests.data import glance as glance_data
-from tests.data import keypair as keypair_data
-from tests.data import keystone as keystone_data
-from tests.data import neutron as neutron_data
-from tests.data import quotas as quota_data
-from tests.data import security_groups as sec_data
-from tests.data import server as server_data
-
-def find_tenant(keystone, tenant_name):
-    for tenant in keystone.tenants.list():
-        if tenant.name == tenant_name:
-            return tenant.id
-    return None
-
-def find_image(glance, image_name):
-    for im in glance.images.list():
-        if im.name == image_name:
-            return im
-    return None
 
 class TestOSAccount(unittest.TestCase):
     def setUp(self):
@@ -35,81 +16,353 @@ class TestOSAccount(unittest.TestCase):
                                    settings.OS_TENANT_NAME,
                                    settings.OS_AUTH_URL,)
 
-    def test_keystone_simple(self):
-        config_data = keystone_data.DATA
-        self.client.setup_config(config_data)
+    def __delete_router(self, router_id):
+        # find any interfaces on a router and delete
+        self.client.neutron.remove_gateway_router(router_id)
+        for port in self.client.neutron.list_ports()['ports']:
+            if port['device_id'] == router_id:
+                data = {'subnet_id' : port['fixed_ips'][0]['subnet_id']}
+                self.client.neutron.remove_interface_router(router_id, data)
+        self.client.neutron.delete_router(router_id)
+
+    def __next_cidr(self):
+        subnet_list = self.client.neutron.list_subnets()['subnets']
+        cidr = '192.168.0.0/24'
+        current_cidr = [i['cidr'] for i in subnet_list]
+        while cidr in current_cidr:
+            temp_int = cidr.split('.')[2]
+            cidr = '192.168.%d.0/24' % (int(temp_int) + 1)
+        return cidr
+
+    def __wait_deletion(self, list_function, obj_id, timeout=3600, interval=5): #pylint:disable=no-self-use
+        stop = time.time() + timeout
+        while True:
+            obj_list = list_function()
+            if obj_id not in [i.id for i in obj_list]:
+                return True
+            time.sleep(interval)
+            if time >= stop:
+                return False
+
+    def __cleanup(self, results): #pylint: disable=too-many-branches, too-many-locals
+        # reverse order of ordered dict for deletion
+        deletion_order = ['server', 'volume', 'image', 'router', 'subnet',
+                          'network', 'keypair', 'security_group',
+                          'flavor', 'user', 'project']
+        for key in deletion_order:
+            try:
+                if key == 'project':
+                    for tenant in results[key]:
+                        self.client.keystone.tenants.delete(tenant)
+                elif key == 'user':
+                    for user in results[key]:
+                        self.client.keystone.users.delete(user)
+                elif key == 'flavor':
+                    for flavor in results[key]:
+                        self.client.nova.flavors.delete(flavor)
+                elif key == 'security_group':
+                    for sec in results[key]:
+                        self.client.nova.security_groups.delete(sec)
+                elif key == 'keypair':
+                    for keypair in results[key]:
+                        self.client.nova.keypairs.delete(keypair)
+                elif key == 'image':
+                    for image in results[key]:
+                        self.client.glance.images.delete(image)
+                elif key == 'volume':
+                    for volume in results[key]:
+                        self.client.cinder.volumes.delete(volume)
+                elif key == 'server':
+                    for server in results[key]:
+                        self.client.nova.servers.delete(server)
+                        self.__wait_deletion(self.client.nova.servers.list,
+                                             server)
+                elif key == 'router':
+                    for router in results[key]:
+                        self.__delete_router(router)
+                elif key == 'subnet':
+                    for subnet in results[key]:
+                        self.client.neutron.delete_subnet(subnet)
+                elif key == 'network':
+                    for network in results[key]:
+                        self.client.neutron.delete_network(network)
+            except KeyError:
+                continue
+
+    def test_keystone(self):
+        user_name = utils.random_string()
+        project_name = utils.random_string()
+        keystone_data = [
+            {
+                'user' : {
+                    'password' : utils.random_string(prefix='old'),
+                    'name' : user_name,
+                    'email' : None,
+
+                },
+            },
+            {
+                'project' : {
+                    'description' : utils.random_string(),
+                    'role' : 'admin',
+                    'user' : user_name,
+                    'name' : project_name,
+                },
+            }
+        ]
+        self.client.setup_config(keystone_data)
         user_names = [i.name for i in self.client.keystone.users.list()]
         tenant_names = [i.name for i in self.client.keystone.tenants.list()]
-        self.assertTrue(config_data[0]['user']['name'] in user_names)
-        self.assertTrue(config_data[1]['project']['name'] in tenant_names)
-
-    def test_keystone_update_password(self):
-        config_data = keystone_data.DATA
-        self.client.setup_config(config_data)
+        self.assertTrue(user_name in user_names)
+        self.assertTrue(project_name in tenant_names)
 
         # make sure updating a password works
-        config_data[0]['user']['password'] = 'supernew'
-        self.client.setup_config(config_data)
+        keystone_data[0]['user']['password'] = utils.random_string(prefix='new')
+        results = self.client.setup_config(keystone_data)
+
+        self.__cleanup(results)
 
     def test_flavors(self):
-        config_data = flavor_data.DATA
-        self.client.setup_config(config_data)
+        flavor_name = utils.random_string()
+        flavor_data = [
+            {
+                'flavor' : {
+                    'vcpus' : 4,
+                    'disk' : 0,
+                    'ram' : 4096,
+                    'name' : flavor_name,
+                }
+            },
+        ]
+        results = self.client.setup_config(flavor_data)
         flavor_names = [i.name for i in self.client.nova.flavors.list()]
-        self.assertTrue(config_data[0]['flavor']['name'] in flavor_names)
+        self.assertTrue(flavor_name in flavor_names)
+        self.__cleanup(results)
 
     def test_quotas(self):
-        config_data = quota_data.DATA
-        self.client.setup_config(config_data)
+        project_name = utils.random_string()
+        quota_data = [
+            {
+                'project' : {
+                    'name' : project_name,
+                }
+            },
+            {
+                'nova_quota' : {
+                    "cores": 80,
+                    "ram": 5120000,
+                    "instances": 20,
+                    "tenant_name": project_name,
+                },
+                "cinder_quota": {
+                    "gigabytes": 1000000,
+                    "tenant_name": project_name,
+                    "volumes": 20
+                },
+            },
+        ]
 
+        results = self.client.setup_config(quota_data)
+
+        tenant_id = results['project'][0]
         # Delete tenant, remove from data, make sure exception thrown
-        tenant_id = find_tenant(self.client.keystone,
-                                config_data[0]['project']['name'])
         self.client.keystone.tenants.delete(tenant_id)
-        config_data.pop(0)
+        quota_data.pop(0)
         self.assertRaises(OpenStackAccountError,
-                          self.client.setup_config, config_data)
+                          self.client.setup_config, quota_data)
 
     def test_security_group(self):
-        config_data = sec_data.DATA
-        self.client.setup_config(config_data)
-
-        # make sure it works without projects as well
-        config_data.pop(0)
-        self.client.setup_config(config_data)
+        secgroup_name = utils.random_string()
+        sec_data = [
+            {
+                'security_group' : {
+                    'rules' : [
+                        {
+                            'to_port': 22,
+                            'cidr' : '0.0.0.0/0',
+                            'from_port': 22,
+                            'ip_protocol' : 'tcp'
+                        },
+                    ],
+                    'name' : secgroup_name,
+                    'description' : utils.random_string(),
+                },
+            },
+        ]
+        results = self.client.setup_config(sec_data)
+        sec_names = [i.name for i in self.client.nova.security_groups.list()]
+        self.assertTrue(secgroup_name in sec_names)
+        self.__cleanup(results)
 
     def test_keypair(self):
-        config_data = keypair_data.DATA
+        keyname = utils.random_string()
+        filename = utils.random_string(prefix='/tmp/')
+        keypair_data = [
+            {
+                'keypair' : {
+                    'name' : keyname,
+                    'file' : filename,
+                },
+            },
+        ]
         key = RSA.generate(2048)
         pubkey = key.publickey()
-        with open(config_data[0]['keypair']['file'], 'w') as f:
+        with open(filename, 'w') as f:
             f.write(pubkey.exportKey('OpenSSH'))
-        os.chmod(config_data[0]['keypair']['file'], 0600)
-        self.client.setup_config(config_data)
-        os.remove(config_data[0]['keypair']['file'])
+        os.chmod(filename, 0600)
+        results = self.client.setup_config(keypair_data)
+        keypairs = [i.name for i in self.client.nova.keypairs.list()]
+        self.assertTrue(keyname in keypairs)
+        os.remove(filename)
+        self.__cleanup(results)
 
     def test_neutron(self):
-        config_data = neutron_data.DATA
-        self.client.setup_config(config_data)
+        project_name = utils.random_string()
+        network_name = utils.random_string()
+        subnet_name = utils.random_string()
+        router_name = utils.random_string()
+        cidr = self.__next_cidr()
+        neutron_data = [
+            {
+                "project": {
+                    "name": project_name,
+                }
+            },
+            {
+                "network": {
+                    "tenant_name": project_name,
+                    "name": network_name,
+                    "shared": True,
+                }
+            },
+            {
+                "subnet": {
+                    "ip_version": "4",
+                    "tenant_name": project_name,
+                    "cidr": cidr,
+                    "name": subnet_name,
+                    "network": network_name,
+                }
+            },
+            {
+                "router": {
+                    "tenant_name": project_name,
+                    "external_network": "external",
+                    "name": router_name,
+                    "internal_subnet": subnet_name,
+                }
+            },
+        ]
+        results = self.client.setup_config(neutron_data)
+        networks = [i['name']
+                    for i in self.client.neutron.list_networks()['networks']]
+        subnets = [i['name']
+                   for i in self.client.neutron.list_subnets()['subnets']]
+        routers = [i['name']
+                   for i in self.client.neutron.list_routers()['routers']]
+        self.assertTrue(network_name in networks)
+        self.assertTrue(subnet_name in subnets)
+        self.assertTrue(router_name in routers)
+
+        self.__cleanup(results)
 
     def test_glance(self):
-        config_data = glance_data.DATA
-        self.client.setup_config(config_data)
+        image_name = utils.random_string()
+        image_url = "http://cloudhyd.com/openstack/images/cirros-0.3.0-x86_64-disk.img"
+        glance_data = [
+            {
+                "image": {
+                    "name": image_name,
+                    "container_format": "bare",
+                    "disk_format": "qcow2",
+                    "copy_from": image_url,
+                    "is_public": False,
+                    "wait": True,
+                }
+            },
+        ]
+        results = self.client.setup_config(glance_data)
 
         # check updating images works
-        config_data[0]['image']['is_public'] = True
-        self.client.setup_config(config_data)
+        glance_data[0]['image']['is_public'] = True
+        self.client.setup_config(glance_data)
 
-        image = find_image(self.client.glance,
-                           config_data[0]['image']['name'])
+        image = self.client.glance.images.get(results['image'][0])
         self.assertTrue(image.is_public)
+        self.__cleanup(results)
 
     def test_cinder(self):
-        config_data = cinder_data.DATA
-        self.client.setup_config(config_data)
+        volume_name = utils.random_string()
+        cinder_data = [
+            {
+                "volume": {
+                    "size": 5,
+                    "name": volume_name,
+                    "timeout": 3600,
+                    "wait": True,
+                }
+            }
+        ]
+        results = self.client.setup_config(cinder_data)
 
         volume_names = [i.display_name for i in self.client.cinder.volumes.list()]
-        self.assertTrue(config_data[0]['volume']['name'] in volume_names)
+        self.assertTrue(volume_name in volume_names)
+        self.__cleanup(results)
 
     def test_server(self):
-        config_data = server_data.DATA
-        self.client.setup_config(config_data)
+        image_name = utils.random_string()
+        image_url = "http://cloudhyd.com/openstack/images/cirros-0.3.0-x86_64-disk.img"
+        network_name = utils.random_string()
+        subnet_name = utils.random_string()
+        flavor_name = utils.random_string()
+        server_name = utils.random_string()
+        cidr = self.__next_cidr()
+        server_data = [
+            {
+                "network": {
+                    "name": network_name,
+                }
+            },
+            {
+                "subnet": {
+                    "ip_version": "4",
+                    "cidr": cidr,
+                    "name": subnet_name,
+                    "network": network_name,
+                }
+            },
+            {
+                "image": {
+                    "name": image_name,
+                    "container_format": "bare",
+                    "disk_format": "qcow2",
+                    "copy_from": image_url,
+                    "is_public": False,
+                    "wait": True,
+                }
+            },
+            {
+                "flavor": {
+                    "vcpus": 4,
+                    "disk": 0,
+                    "ram": 4096,
+                    "name": flavor_name,
+                }
+            },
+            {
+                "server": {
+                    "flavor_name": flavor_name,
+                    "timeout": 1200,
+                    "image_name": image_name,
+                    "name": server_name,
+                    "wait": True,
+                    "nics": [{
+                        "network_name": network_name,
+                    }]
+                }
+            }
+        ]
+        results = self.client.setup_config(server_data)
+        servers = [i.name for i in self.client.nova.servers.list()]
+        self.assertTrue(server_name in servers)
+        self.__cleanup(results)
