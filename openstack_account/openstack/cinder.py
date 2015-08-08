@@ -30,7 +30,7 @@ def create_volume(cinder, **args):
     timeout = args.pop('timeout', settings.VOLUME_WAIT_TIMEOUT)
     interval = args.pop('interval', settings.VOLUME_WAIT_INTERVAL)
     volume = find_volume(cinder, name)
-    # Cinder uses 'display name' because fuck convention i suppose
+    # Cinder uses 'display_name' for some dumb reason
     args['display_name'] = name
     if volume:
         log.info('Volume already exists:%s' % volume.id)
