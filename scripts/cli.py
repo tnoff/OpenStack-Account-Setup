@@ -23,6 +23,7 @@ def parse_args():
     p.add_argument('--password', help='OpenStack Auth password')
     p.add_argument('--tenant-name', help='OpenStack Auth tenant name')
     p.add_argument('--auth-url', help='OpenStack Auth keystone url')
+    p.add_argument('--debug', action='store_true', help='Show debug output')
     p.add_argument('config_file', help='Config file to use')
     return p.parse_args()
 
@@ -46,6 +47,8 @@ def get_env_args(args):
 def main():
     log.debug('Reading CLI args')
     args = get_env_args(parse_args())
+    if args.debug:
+        log.setLevel(logging.DEBUG)
     log.debug('Initialzing Account Setup')
     a = AccountSetup(args.username,
                      args.password,
