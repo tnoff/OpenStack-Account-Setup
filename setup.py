@@ -20,7 +20,7 @@ setuptools.setup(
     ],
     entry_points={
         'console_scripts' : [
-            'openstack-account = openstack_account.command_line:main',
+            'openstack-account = scripts.cli:main',
         ]
     },
     packages=setuptools.find_packages(),
