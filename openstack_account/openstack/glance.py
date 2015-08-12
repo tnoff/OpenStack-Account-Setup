@@ -5,12 +5,6 @@ import logging
 
 log = logging.getLogger(__name__)
 
-def find_image(glance, name):
-    for im in glance.images.list():
-        if im.name == name:
-            return im
-    return None
-
 def create_image(glance, **args):
     log.debug('Creating image:%s' % args)
     wait = args.pop('wait', settings.IMAGE_WAIT)
@@ -19,7 +13,7 @@ def create_image(glance, **args):
     # By default use glance that already exists
     image_name = args.get('name', None)
     file_location = args.pop('file', None)
-    image = find_image(glance, image_name)
+    image = utils.find_image(glance, image_name)
     if image:
         # update image data
         args.pop('copy_from', None)

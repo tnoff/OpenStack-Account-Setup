@@ -1,4 +1,5 @@
 from openstack_account import schema
+from openstack_account import utils
 
 from openstack_account.openstack import cinder as os_cinder
 from openstack_account.openstack import glance as os_glance
@@ -89,8 +90,8 @@ class AccountSetup(object): #pylint: disable=too-many-instance-attributes
 
     def create_source_file(self, **args):
         log.info('Creating source file:%s' % args)
-        tenant = os_keystone.find_project(args.pop('tenant_name', None),
-                                          self.keystone)
+        tenant = utils.find_project(self.keystone,
+                                    args.pop('tenant_name', None))
         file_name = args.pop('file', None)
         user = args.pop('user', None)
         stringy = '#!/bin/bash\n'

@@ -1,4 +1,4 @@
-from openstack_account.openstack import keystone as os_keystone
+from openstack_account import utils
 
 from neutronclient.common import exceptions as neutron_exceptions
 
@@ -6,48 +6,15 @@ import logging
 
 log = logging.getLogger(__name__)
 
-def find_network(neutron, name, tenant_id):
-    for net in neutron.list_networks()['networks']:
-        if net['name'] == name:
-            if tenant_id:
-                if tenant_id == net['tenant_id']:
-                    return net
-            else:
-                return net
-    return None
-
-def find_subnet(neutron, name, tenant_id, network_id):
-    for sub in neutron.list_subnets()['subnets']:
-        if sub['name'] == name:
-            if network_id:
-                if sub['network_id'] == network_id:
-                    return sub
-            elif tenant_id:
-                if tenant_id == sub['tenant_id']:
-                    return sub
-            else:
-                return sub
-    return None
-
-def find_router(neutron, name, tenant_id):
-    for router in neutron.list_routers()['routers']:
-        if router['name'] == name:
-            if tenant_id:
-                if tenant_id == router['tenant_id']:
-                    return router
-            else:
-                return router
-    return None
-
 def create_network(neutron, keystone, **args):
     log.debug('Creating network:%s' % args)
-    tenant = os_keystone.find_project(args.pop('tenant_name', None),
-                                      keystone)
+    tenant = utils.find_project(keystone,
+                                args.pop('tenant_name', None))
     if not tenant:
         tenant_id = None
     else:
         tenant_id = tenant.id
-    net = find_network(neutron, args['name'], tenant_id)
+    net = utils.find_network(neutron, args['name'], tenant_id)
     if net:
         log.info('Network already exists:%s' % net['id'])
         return
@@ -59,15 +26,15 @@ def create_network(neutron, keystone, **args):
 
 def create_subnet(neutron, keystone, **args):
     log.debug('Creating subnet:%s' % args)
-    tenant = os_keystone.find_project(args.pop('tenant_name', None),
-                                      keystone)
+    tenant = utils.find_project(keystone,
+                                args.pop('tenant_name', None))
     if not tenant:
         tenant_id = None
     else:
         tenant_id = tenant.id
-    network = find_network(neutron, args.pop('network', None), tenant_id)
+    network = utils.find_network(neutron, args.pop('network', None), tenant_id)
     args['network_id'] = network['id']
-    sub = find_subnet(neutron, args['name'], tenant_id, network['id'])
+    sub = utils.find_subnet(neutron, args['name'], tenant_id, network['id'])
     if sub:
         log.info('Subnet already exists:%s' % sub['id'])
         return
@@ -83,16 +50,16 @@ def create_subnet(neutron, keystone, **args):
 
 def create_router(neutron, keystone, **args):
     log.debug('Create router:%s' % args)
-    tenant = os_keystone.find_project(args.pop('tenant_name', None),
-                                      keystone)
+    tenant = utils.find_project(keystone,
+                                args.pop('tenant_name', None))
     if tenant:
         args['tenant_id'] = tenant.id
-    router = find_router(neutron, args['name'], None)
-    external = find_network(neutron, args.pop('external_network', None),
-                            None)
-    internal = find_subnet(neutron,
-                           args.pop('internal_subnet', None),
-                           None, None)
+    router = utils.find_router(neutron, args['name'], None)
+    external = utils.find_network(neutron, args.pop('external_network', None),
+                                  None)
+    internal = utils.find_subnet(neutron,
+                                 args.pop('internal_subnet', None),
+                                 None, None)
     if router:
         log.info('Router already exists:%s' % router['id'])
     else:

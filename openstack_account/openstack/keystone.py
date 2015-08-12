@@ -1,32 +1,10 @@
+from openstack_account import utils
+
 from keystoneclient.openstack.common.apiclient import exceptions as keystone_exceptions
 
 import logging
 
 log = logging.getLogger(__name__)
-
-def find_user(name, keystone):
-    if not name:
-        return None
-    for user in keystone.users.list():
-        if user.name == name:
-            return user
-    return None
-
-def find_role(name, keystone):
-    if not name:
-        return None
-    for role in keystone.roles.list():
-        if name.lower() == role.name.lower():
-            return role
-    return None
-
-def find_project(name, keystone):
-    if not name:
-        return None
-    for tenant in keystone.tenants.list():
-        if tenant.name == name:
-            return tenant
-    return None
 
 def create_user(keystone, **kwargs):
     log.debug('Creating user:%s' % kwargs)
@@ -38,7 +16,7 @@ def create_user(keystone, **kwargs):
         return None
     except keystone_exceptions.Conflict:
         # User allready exists
-        user = find_user(kwargs['name'], keystone)
+        user = utils.find_user(keystone, kwargs['name'])
         log.debug("User with name already exists:%s" % user)
         # Update data with whats in args
         # Password is a seperate function
@@ -51,15 +29,15 @@ def create_user(keystone, **kwargs):
 
 def create_project(keystone, **kwargs):
     log.debug('Creating project:%s' % kwargs)
-    role = find_role(kwargs.pop('role', None), keystone)
+    role = utils.find_role(keystone, kwargs.pop('role', None))
     kwargs['tenant_name'] = kwargs.pop('name', None)
-    user = find_user(kwargs.pop('user', None), keystone)
+    user = utils.find_user(keystone, kwargs.pop('user', None))
 
     try:
         project = keystone.tenants.create(**kwargs)
         log.info('Project created:%s' % project.id)
     except keystone_exceptions.Conflict:
-        project = find_project(kwargs['tenant_name'] or None, keystone)
+        project = utils.find_project(keystone, kwargs['tenant_name'] or None)
         log.debug('Project already exists:%s' % project.id)
         # Update data with whats in args
         project = keystone.tenants.update(project.id, **kwargs)
