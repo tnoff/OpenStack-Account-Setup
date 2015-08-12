@@ -19,4 +19,3 @@ def wait_status(function, obj_id, accept_states, reject_states,
         time.sleep(interval)
         obj = function(obj_id)
     return None
-
