@@ -136,7 +136,7 @@ class AccountSetup(object): #pylint: disable=too-many-instance-attributes
         auth_url = auth_url or self.os_auth_url
         self.__reset_clients(username, password, tenant_name, auth_url,)
 
-    def setup_config(self, config):
+    def import_config(self, config):
         log.debug('Checking schema')
         validate(config, schema.SCHEMA)
         # schema is a list of items
@@ -159,3 +159,12 @@ class AccountSetup(object): #pylint: disable=too-many-instance-attributes
                     return_data[key].append(result)
         log.info('Finished with results :%s' % return_data)
         return return_data
+
+    def export_config(self):
+        log.info("Gathering data to export")
+        export_data = []
+        log.info("Gathering keystone data")
+        export_data += os_keystone.save_users(self.keystone)
+        export_data += os_keystone.save_projects(self.keystone)
+        export_data += os_keystone.save_roles(self.keystone)
+        return export_data

@@ -9,7 +9,7 @@ from openstack_account import utils
 
 from tests import settings
 
-class TestOSAccount(unittest.TestCase):
+class TestImport(unittest.TestCase):
     def setUp(self):
         self.client = AccountSetup(settings.OS_USERNAME,
                                    settings.OS_PASSWORD,
@@ -110,7 +110,7 @@ class TestOSAccount(unittest.TestCase):
                 },
             }
         ]
-        self.client.setup_config(keystone_data)
+        self.client.import_config(keystone_data)
         user_names = [i.name for i in self.client.keystone.users.list()]
         tenant_names = [i.name for i in self.client.keystone.tenants.list()]
         self.assertTrue(user_name in user_names)
@@ -118,7 +118,7 @@ class TestOSAccount(unittest.TestCase):
 
         # make sure updating a password works
         keystone_data[0]['user']['password'] = utils.random_string(prefix='new')
-        results = self.client.setup_config(keystone_data)
+        results = self.client.import_config(keystone_data)
 
         self.__cleanup(results)
 
@@ -134,7 +134,7 @@ class TestOSAccount(unittest.TestCase):
                 }
             },
         ]
-        results = self.client.setup_config(flavor_data)
+        results = self.client.import_config(flavor_data)
         flavor_names = [i.name for i in self.client.nova.flavors.list()]
         self.assertTrue(flavor_name in flavor_names)
         self.__cleanup(results)
@@ -162,14 +162,14 @@ class TestOSAccount(unittest.TestCase):
             },
         ]
 
-        results = self.client.setup_config(quota_data)
+        results = self.client.import_config(quota_data)
 
         tenant_id = results['project'][0]
         # Delete tenant, remove from data, make sure exception thrown
         self.client.keystone.tenants.delete(tenant_id)
         quota_data.pop(0)
         self.assertRaises(OpenStackAccountError,
-                          self.client.setup_config, quota_data)
+                          self.client.import_config, quota_data)
 
     def test_security_group(self):
         secgroup_name = utils.random_string()
@@ -189,7 +189,7 @@ class TestOSAccount(unittest.TestCase):
                 },
             },
         ]
-        results = self.client.setup_config(sec_data)
+        results = self.client.import_config(sec_data)
         sec_names = [i.name for i in self.client.nova.security_groups.list()]
         self.assertTrue(secgroup_name in sec_names)
         self.__cleanup(results)
@@ -210,7 +210,7 @@ class TestOSAccount(unittest.TestCase):
         with open(filename, 'w') as f:
             f.write(pubkey.exportKey('OpenSSH'))
         os.chmod(filename, 0600)
-        results = self.client.setup_config(keypair_data)
+        results = self.client.import_config(keypair_data)
         keypairs = [i.name for i in self.client.nova.keypairs.list()]
         self.assertTrue(keyname in keypairs)
         os.remove(filename)
@@ -253,7 +253,7 @@ class TestOSAccount(unittest.TestCase):
                 }
             },
         ]
-        results = self.client.setup_config(neutron_data)
+        results = self.client.import_config(neutron_data)
         networks = [i['name']
                     for i in self.client.neutron.list_networks()['networks']]
         subnets = [i['name']
@@ -281,11 +281,11 @@ class TestOSAccount(unittest.TestCase):
                 }
             },
         ]
-        results = self.client.setup_config(glance_data)
+        results = self.client.import_config(glance_data)
 
         # check updating images works
         glance_data[0]['image']['is_public'] = True
-        self.client.setup_config(glance_data)
+        self.client.import_config(glance_data)
 
         image = self.client.glance.images.get(results['image'][0])
         self.assertTrue(image.is_public)
@@ -303,7 +303,7 @@ class TestOSAccount(unittest.TestCase):
                 }
             }
         ]
-        results = self.client.setup_config(cinder_data)
+        results = self.client.import_config(cinder_data)
 
         volume_names = [i.display_name for i in self.client.cinder.volumes.list()]
         self.assertTrue(volume_name in volume_names)
@@ -362,7 +362,7 @@ class TestOSAccount(unittest.TestCase):
                 }
             }
         ]
-        results = self.client.setup_config(server_data)
+        results = self.client.import_config(server_data)
         servers = [i.name for i in self.client.nova.servers.list()]
         self.assertTrue(server_name in servers)
         self.__cleanup(results)

@@ -1,0 +1,65 @@
+import unittest
+
+from openstack_account.client import AccountSetup
+from openstack_account import utils
+
+from tests import settings
+
+class TestExport(unittest.TestCase):
+    def setUp(self):
+        self.client = AccountSetup(settings.OS_USERNAME,
+                                   settings.OS_PASSWORD,
+                                   settings.OS_TENANT_NAME,
+                                   settings.OS_AUTH_URL,)
+
+    def _get_data(self, item_list, accepted_keys):
+        data = []
+        for item in item_list:
+            add = True
+            for key in item:
+                if key not in accepted_keys:
+                    add = False
+                    break
+            if add:
+                data.append(item)
+        return data
+
+    def test_users(self):
+        data = self.client.export_config()
+        user_data = self._get_data(data, ['user'])
+        # create a new temp user
+        user_name = utils.random_string(prefix='user-')
+        password = utils.random_string()
+        user = self.client.keystone.users.create(user_name, password, None)
+        new_data = self.client.export_config()
+        new_user_data = self._get_data(new_data, ['user'])
+        self.assertNotEqual(cmp(user_data, new_user_data), 0)
+        self.client.keystone.users.delete(user.id)
+
+    def test_projects(self):
+        data = self.client.export_config()
+        project_data = self._get_data(data, ['project'])
+        # create a new temp project
+        project_name = utils.random_string(prefix='project-')
+        project = self.client.keystone.tenants.create(project_name)
+        new_data = self.client.export_config()
+        new_project_data = self._get_data(new_data, ['project'])
+        self.assertNotEqual(cmp(project_data, new_project_data), 0)
+        self.client.keystone.tenants.delete(project.id)
+
+    def test_roles(self):
+        member_role = utils.find_role(self.client.keystone, '_member_')
+        data = self.client.export_config()
+        project_data = self._get_data(data, ['project'])
+        # create a new temp project and uesr
+        user_name = utils.random_string(prefix='user-')
+        password = utils.random_string()
+        tenant_name = utils.random_string(prefix='project-')
+        user = self.client.keystone.users.create(user_name, password, None)
+        tenant = self.client.keystone.tenants.create(tenant_name)
+        self.client.keystone.tenants.add_user(tenant.id, user.id, member_role.id)
+        new_data = self.client.export_config()
+        new_project_data = self._get_data(new_data, ['project'])
+        self.assertNotEqual(cmp(project_data, new_project_data), 0)
+        self.client.keystone.tenants.delete(tenant.id)
+        self.client.keystone.users.delete(user.id)

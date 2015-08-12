@@ -20,6 +20,15 @@ def wait_status(function, obj_id, accept_states, reject_states,
         obj = function(obj_id)
     return None
 
+def pretty_dict(data):
+    for key, value in data.iteritems():
+        if isinstance(value, bool):
+            continue
+        if isinstance(value, int):
+            continue
+        data[key] = str(value)
+    return data
+
 def find_sec_group(nova, name):
     for group in nova.security_groups.list():
         if group.name == name:

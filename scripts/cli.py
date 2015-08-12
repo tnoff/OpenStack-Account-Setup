@@ -23,19 +23,20 @@ def parse_args():
     p.add_argument('--tenant-name', help='OpenStack Auth tenant name')
     p.add_argument('--auth-url', help='OpenStack Auth keystone url')
     p.add_argument('--debug', action='store_true', help='Show debug output')
-    p.add_argument('config_file', help='Config file to use')
+
+    sub = p.add_subparsers(dest='command', help='Command')
+    imp = sub.add_parser('import', help='Import config')
+    imp.add_argument('config_file', help='Config file to import')
+    exp = sub.add_parser('export', help='Export config')
+    exp.add_argument('config_file', help='Export output file')
     return p.parse_args()
 
 def get_env_args(args):
     # Check environment for variables if not set on command line
-    if not args.username:
-        args.username = os.getenv('OS_USERNAME',)
-    if not args.password:
-        args.password = os.getenv('OS_PASSWORD',)
-    if not args.tenant_name:
-        args.tenant_name = os.getenv('OS_TENANT_NAME',)
-    if not args.auth_url:
-        args.auth_url = os.getenv('OS_AUTH_URL',)
+    args.username = args.username or os.getenv('OS_USERNAME')
+    args.password = args.password or os.getenv('OS_PASSWORD')
+    args.tenant_name = args.tenant_name or os.getenv('OS_TENANT_NAME')
+    args.auth_url = args.auth_url or os.getenv('OS_AUTH_URL')
     must_have = ['username', 'password', 'tenant_name', 'auth_url']
     for item in must_have:
         if not getattr(args, item):
@@ -53,7 +54,13 @@ def main():
                      args.password,
                      args.tenant_name,
                      args.auth_url,)
-    with open(args.config_file, 'r') as f:
-        log.debug('Loading configs from:%s' % args.config_file)
-        config_data = yaml.load(f)
-        a.setup_config(config_data)
+    if args.command == 'import':
+        with open(args.config_file, 'r') as f:
+            log.debug('Loading configs from:%s' % args.config_file)
+            config_data = yaml.load(f)
+            a.import_config(config_data)
+    elif args.command == 'export':
+        data = a.export_config()
+        with open(args.config_file, 'w') as f:
+            log.debug('Writing data to file:%s' % args.config_file)
+            f.write(yaml.dump(data))
