@@ -109,7 +109,7 @@ def create_server(nova, neutron, **kwargs):
                           ['ACTIVE'], ['ERROR'], interval, timeout)
     return server.id
 
-def save_flavors(nova, **kwargs):
+def save_flavors(nova):
     log.info('Saving flavor data')
     flavors = nova.flavors.list() + nova.flavors.list(is_public=False)
     skips = settings.EXPORT_KEYS_IGNORE + settings.EXPORT_SKIP_FLAVORS
@@ -126,5 +126,15 @@ def save_flavors(nova, **kwargs):
             flavor_args['swap'] = 0
         else:
             flavor_args['swap'] = int(flavor_args.pop('swap', 0))
+        flavor_args['name'] = str(flavor_args.pop('name'))
         flavor_data.append({'flavor' : flavor_args})
     return flavor_data
+
+def save_quotas(nova, tenant):
+    quotas = nova.quotas.get(tenant.id)
+    quota_args = vars(quotas)
+    for key in quota_args.keys():
+        if key in settings.EXPORT_KEYS_IGNORE:
+            quota_args.pop(key)
+    quota_args['tenant_name'] = str(tenant.name)
+    return [{'nova_quota' : quota_args}]

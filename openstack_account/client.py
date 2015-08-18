@@ -168,4 +168,8 @@ class AccountSetup(object): #pylint: disable=too-many-instance-attributes
         export_data += os_keystone.save_projects(self.keystone)
         export_data += os_keystone.save_roles(self.keystone)
         export_data += os_nova.save_flavors(self.nova)
+        log.info("Saving quota & security group data")
+        for tenant in self.keystone.tenants.list():
+            export_data += os_nova.save_quotas(self.nova, tenant)
+            export_data += os_cinder.save_quotas(self.cinder, tenant)
         return export_data

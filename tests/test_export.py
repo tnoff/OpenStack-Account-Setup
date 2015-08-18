@@ -72,7 +72,31 @@ class TestExport(unittest.TestCase):
         flavor = self.client.nova.flavors.create(flavor_name, 1024, 1, 10)
         new_data = self.client.export_config()
         new_flavor_data = self._get_data(new_data, ['flavor'])
-        print flavor_data
-        print new_flavor_data
         self.assertNotEqual(cmp(flavor_data, new_flavor_data), 0)
         self.client.nova.flavors.delete(flavor.id)
+
+    def test_nova_quotas(self):
+        data = self.client.export_config()
+        quota_data = self._get_data(data, ['nova_quota'])
+        # change a random quota, make sure it changes
+        tenant = self.client.keystone.tenants.list()[0]
+        quota = self.client.nova.quotas.get(tenant.id)
+        instances = quota.instances
+        self.client.nova.quotas.update(tenant.id, instances=instances-1)
+        new_data = self.client.export_config()
+        new_quota_data = self._get_data(new_data, ['nova_quota'])
+        self.assertNotEqual(cmp(quota_data, new_quota_data), 0)
+        self.client.nova.quotas.update(tenant.id, instances=instances)
+
+    def test_cinder_quotas(self):
+        data = self.client.export_config()
+        quota_data = self._get_data(data, ['cinder_quota'])
+        # change a random quota, make sure it changes
+        tenant = self.client.keystone.tenants.list()[0]
+        quota = self.client.cinder.quotas.get(tenant.id)
+        volumes = quota.volumes
+        self.client.cinder.quotas.update(tenant.id, volumes=volumes-1)
+        new_data = self.client.export_config()
+        new_quota_data = self._get_data(new_data, ['cinder_quota'])
+        self.assertNotEqual(cmp(quota_data, new_quota_data), 0)
+        self.client.cinder.quotas.update(tenant.id, volumes=volumes)

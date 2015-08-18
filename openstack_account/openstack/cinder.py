@@ -35,3 +35,12 @@ def create_volume(cinder, **args):
         utils.wait_status(cinder.volumes.get, volume.id,
                           ['available'], ['error'], interval, timeout)
     return volume.id
+
+def save_quotas(cinder, tenant):
+    quotas = cinder.quotas.get(tenant.id)
+    quota_args = vars(quotas)
+    for key in quota_args.keys():
+        if key in settings.EXPORT_KEYS_IGNORE:
+            quota_args.pop(key)
+    quota_args['tenant_name'] = str(tenant.name)
+    return [{'cinder_quota' : quota_args}]
