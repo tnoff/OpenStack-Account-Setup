@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 import random
 import string
 import time
@@ -19,6 +20,16 @@ def wait_status(function, obj_id, accept_states, reject_states,
         time.sleep(interval)
         obj = function(obj_id)
     return None
+
+@contextmanager
+def temp_user(keystone):
+    username = random_string(prefix='user-')
+    password = random_string()
+    user = keystone.users.create(username, password, None)
+    try:
+        yield user, password
+    finally:
+        keystone.users.delete(user.id)
 
 def pretty_dict(data):
     for key, value in data.iteritems():

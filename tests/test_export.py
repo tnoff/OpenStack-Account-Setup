@@ -100,3 +100,14 @@ class TestExport(unittest.TestCase):
         new_quota_data = self._get_data(new_data, ['cinder_quota'])
         self.assertNotEqual(cmp(quota_data, new_quota_data), 0)
         self.client.cinder.quotas.update(tenant.id, volumes=volumes)
+
+    def test_security_groups(self):
+        data = self.client.export_config()
+        sec_data = self._get_data(data, ['security_group', 'os_tenant_name'])
+        # create a new security group
+        secname = utils.random_string(prefix='sec-')
+        sec = self.client.nova.security_groups.create(secname, "")
+        new_data = self.client.export_config()
+        new_sec_data = self._get_data(new_data, ['security_group', 'os_tenant_name'])
+        self.assertNotEqual(cmp(sec_data, new_sec_data), 0)
+        self.client.nova.security_groups.delete(sec.id) #pylint: disable=no-member

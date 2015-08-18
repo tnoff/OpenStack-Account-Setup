@@ -138,3 +138,31 @@ def save_quotas(nova, tenant):
             quota_args.pop(key)
     quota_args['tenant_name'] = str(tenant.name)
     return [{'nova_quota' : quota_args}]
+
+def save_security_groups(nova, tenant):
+    group_data = []
+    groups = nova.security_groups.list()
+    rule_skip = settings.EXPORT_SKIP_RULES + settings.EXPORT_KEYS_IGNORE
+    for group in groups:
+        group_args = vars(group)
+        group_args['name'] = str(group_args.pop('name'))
+        group_args['description'] = str(group_args.pop('description'))
+        for key in group_args.keys():
+            if key in settings.EXPORT_KEYS_IGNORE + ['tenant_id']:
+                group_args.pop(key)
+        for rule in group_args['rules']:
+            for key in rule.keys():
+                if key in rule_skip:
+                    rule.pop(key)
+            rule['ip_protocol'] = str(rule.pop('ip_protocol'))
+            rule['from_port'] = rule.pop('from_port')
+            rule['to_port'] = rule.pop('to_port')
+            ip_range = rule.pop('ip_range')
+            try:
+                rule['cidr'] = str(ip_range.pop('cidr'))
+            except KeyError:
+                rule['cidr'] = None
+        new_data = {'security_group' : group_args,
+                    'os_tenant_name' : str(tenant.name)}
+        group_data.append(new_data)
+    return group_data

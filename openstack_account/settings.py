@@ -17,3 +17,5 @@ EXPORT_SKIP_USERS = ['nova', 'cinder', 'glance', 'neutron']
 EXPORT_SKIP_PROJECTS = ['service']
 
 EXPORT_SKIP_FLAVORS = ['OS-FLV-DISABLED:disabled']
+
+EXPORT_SKIP_RULES = ['group', 'parent_group_id']

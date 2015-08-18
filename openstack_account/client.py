@@ -1,3 +1,4 @@
+from openstack_account import settings
 from openstack_account import schema
 from openstack_account import utils
 
@@ -169,7 +170,16 @@ class AccountSetup(object): #pylint: disable=too-many-instance-attributes
         export_data += os_keystone.save_roles(self.keystone)
         export_data += os_nova.save_flavors(self.nova)
         log.info("Saving quota & security group data")
-        for tenant in self.keystone.tenants.list():
-            export_data += os_nova.save_quotas(self.nova, tenant)
-            export_data += os_cinder.save_quotas(self.cinder, tenant)
+        member_role = utils.find_role(self.keystone, '_member_')
+        with utils.temp_user(self.keystone) as (user, user_password):
+            for tenant in self.keystone.tenants.list():
+                if tenant.name in settings.EXPORT_SKIP_PROJECTS:
+                    continue
+                export_data += os_nova.save_quotas(self.nova, tenant)
+                export_data += os_cinder.save_quotas(self.cinder, tenant)
+                # set up temp user to get security groups
+                self.keystone.tenants.add_user(tenant.id, user.id, member_role.id)
+                nova = nova_v1.Client(user.name, user_password,
+                                      tenant.name, self.os_auth_url)
+                export_data += os_nova.save_security_groups(nova, tenant)
         return export_data
