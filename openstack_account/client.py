@@ -167,4 +167,5 @@ class AccountSetup(object): #pylint: disable=too-many-instance-attributes
         export_data += os_keystone.save_users(self.keystone)
         export_data += os_keystone.save_projects(self.keystone)
         export_data += os_keystone.save_roles(self.keystone)
+        export_data += os_nova.save_flavors(self.nova)
         return export_data

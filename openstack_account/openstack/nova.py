@@ -108,3 +108,23 @@ def create_server(nova, neutron, **kwargs):
         utils.wait_status(nova.servers.get, server.id,
                           ['ACTIVE'], ['ERROR'], interval, timeout)
     return server.id
+
+def save_flavors(nova, **kwargs):
+    log.info('Saving flavor data')
+    flavors = nova.flavors.list() + nova.flavors.list(is_public=False)
+    skips = settings.EXPORT_KEYS_IGNORE + settings.EXPORT_SKIP_FLAVORS
+    flavor_data = []
+    for flavor in flavors:
+        flavor_args = vars(flavor)
+        for key in flavor_args.keys():
+            if key in skips:
+                flavor_args.pop(key)
+        # special to flavors
+        flavor_args['ephemeral'] = flavor_args.pop('OS-FLV-EXT-DATA:ephemeral', 0)
+        flavor_args['is_public'] = flavor_args.pop('os-flavor-access:is_public', True)
+        if flavor_args['swap'] == '':
+            flavor_args['swap'] = 0
+        else:
+            flavor_args['swap'] = int(flavor_args.pop('swap', 0))
+        flavor_data.append({'flavor' : flavor_args})
+    return flavor_data

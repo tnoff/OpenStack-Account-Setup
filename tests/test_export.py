@@ -63,3 +63,16 @@ class TestExport(unittest.TestCase):
         self.assertNotEqual(cmp(project_data, new_project_data), 0)
         self.client.keystone.tenants.delete(tenant.id)
         self.client.keystone.users.delete(user.id)
+
+    def test_flavors(self):
+        data = self.client.export_config()
+        flavor_data = self._get_data(data, ['flavor'])
+        # create new temporary flavor
+        flavor_name = utils.random_string(prefix='flavor-')
+        flavor = self.client.nova.flavors.create(flavor_name, 1024, 1, 10)
+        new_data = self.client.export_config()
+        new_flavor_data = self._get_data(new_data, ['flavor'])
+        print flavor_data
+        print new_flavor_data
+        self.assertNotEqual(cmp(flavor_data, new_flavor_data), 0)
+        self.client.nova.flavors.delete(flavor.id)
