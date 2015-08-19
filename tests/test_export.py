@@ -170,3 +170,24 @@ class TestExport(test_utils.TestClient):
         new_data = self.client.export_config().\
                         sort_by_keys()['security_group']
         self.assertNotEqual(cmp(original_data, new_data), 0)
+
+    def test_images(self):
+        image_url = "http://cloudhyd.com/openstack/images/cirros-0.3.0-x86_64-disk.img"
+        image_data = [
+            {
+                "image": {
+                    "name": utils.random_string(prefix='image-'),
+                    "container_format": "bare",
+                    "disk_format": "qcow2",
+                    "copy_from": image_url,
+                    "is_public": False,
+                    "wait": True,
+                }
+            },
+        ]
+        original_data = self.client.export_images(None).\
+                            sort_by_keys()['image']
+        self.results = self.client.import_config(image_data)
+        new_data = self.client.export_images(None).\
+                         sort_by_keys()['image']
+        self.assertNotEqual(cmp(original_data, new_data), 0)

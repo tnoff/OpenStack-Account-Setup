@@ -1,7 +1,15 @@
 from contextlib import contextmanager
+import os
 import random
 import string
 import time
+
+def check_directory(path):
+    assert isinstance(path, basestring), 'path must be string'
+    abspath = os.path.abspath(path)
+    if not os.path.isdir(abspath):
+        os.mkdir(abspath)
+    return abspath
 
 def random_string(prefix='', length=20):
     chars = string.ascii_lowercase + string.digits

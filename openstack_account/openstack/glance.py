@@ -2,6 +2,7 @@ from openstack_account import settings
 from openstack_account import utils
 
 import logging
+import os
 
 log = logging.getLogger(__name__)
 
@@ -30,3 +31,23 @@ def create_image(glance, **args):
         utils.wait_status(glance.images.get, image.id, ['active'],
                           ['error'], interval, timeout)
     return {'image' : image.id}
+
+def save_image_meta(glance, keystone, image):
+    log.info("Saving image:%s metadata" % image.id)
+    image = glance.images.get(image.id)
+    image_dict = vars(image)
+    for key in settings.EXPORT_KEYS_IGNORE:
+        image_dict.pop(key, None)
+    # identify owner as tenant id
+    owner = '%s' % image_dict.pop('owner')
+    tenant = keystone.tenants.get(owner)
+    image_dict['tenant_name'] = tenant.name
+    return {'image' : image_dict}
+
+def save_image_data(glance, image, save_directory):
+    log.info("Saving image:%s data to dir:%s" % (image.id, save_directory))
+    image_name = 'image-%s-%s' % (image.name, image.id)
+    image_path = os.path.join(save_directory, image_name)
+    with open(image_path, 'wb') as write_file:
+        for chunk in glance.images.data(image.id):
+            write_file.write(chunk)

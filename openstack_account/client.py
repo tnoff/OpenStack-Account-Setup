@@ -207,3 +207,19 @@ class AccountSetup(object): #pylint: disable=too-many-instance-attributes
                                       tenant.name, self.os_auth_url)
                 export_data += os_nova.save_security_groups(nova, tenant)
         return export_data
+
+    def export_images(self, save_directory):
+        if save_directory:
+            save_directory = utils.check_directory(save_directory)
+        log.info("Gathering image data and/or metadata")
+        export_data = AccountSetupResults()
+        # the glance client will not list all images for some reason, use nova
+        for image in self.nova.images.list():
+            export_data += [os_glance.save_image_meta(self.glance, self.keystone,
+                                                      image)]
+            if save_directory:
+                # TODO this should probably verify with checksums
+                # TODO once checksum is done, should check if image exists
+                # .. already
+                os_glance.save_image_data(self.glance, image, save_directory)
+        return export_data

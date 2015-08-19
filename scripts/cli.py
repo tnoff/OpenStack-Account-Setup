@@ -29,6 +29,9 @@ def parse_args():
     imp.add_argument('config_file', help='Config file to import')
     exp = sub.add_parser('export', help='Export config')
     exp.add_argument('config_file', help='Export output file')
+    exp.add_argument('--images',
+                     help='Download cluster images,'
+                          'input save directory for data(None for just metadata')
     return p.parse_args()
 
 def get_env_args(args):
@@ -44,6 +47,12 @@ def get_env_args(args):
             sys.exit('')
     return args
 
+def write_config(config_file, data):
+    with open(config_file, 'w') as f:
+        log.debug('Writing data to file:%s' % config_file)
+        f.write(yaml.dump(data))
+    log.info("Saved metadata info to file:%s" % config_file)
+
 def main():
     log.debug('Reading CLI args')
     args = get_env_args(parse_args())
@@ -53,7 +62,7 @@ def main():
     a = AccountSetup(args.username,
                      args.password,
                      args.tenant_name,
-                     args.auth_url,)
+                     args.auth_url)
     if args.command == 'import':
         with open(args.config_file, 'r') as f:
             log.debug('Loading configs from:%s' % args.config_file)
@@ -61,6 +70,7 @@ def main():
             a.import_config(config_data)
     elif args.command == 'export':
         data = a.export_config()
-        with open(args.config_file, 'w') as f:
-            log.debug('Writing data to file:%s' % args.config_file)
-            f.write(yaml.dump(data))
+        write_config(args.config_file, data)
+        if args.images:
+            data += a.export_images(args.images)
+            write_config(args.config_file, data)
