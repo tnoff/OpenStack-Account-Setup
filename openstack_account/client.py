@@ -126,7 +126,7 @@ class AccountSetup(object): #pylint: disable=too-many-instance-attributes
         return os_cinder.create_volume(self.cinder, self.nova, **args)
 
     def create_server(self, **args):
-        return os_nova.create_server(self.nova, self.neutron, **args)
+        return os_nova.create_server(self.nova, self.neutron, self.cinder, **args)
 
     def __set_clients(self, username, password, tenant_name, auth_url):
         # Allow for the override of openstack auth args in each action

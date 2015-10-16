@@ -75,7 +75,7 @@ def create_keypair(nova, **kwargs):
         log.info('Keypair already exists:%s' % kwargs['name'])
     return kwargs['name']
 
-def create_server(nova, neutron, **kwargs):
+def create_server(nova, neutron, cinder, **kwargs):
     log.debug('Create server:%s' % kwargs)
     name = kwargs.get('name')
     wait = kwargs.pop('wait', settings.SERVER_WAIT)
@@ -89,7 +89,7 @@ def create_server(nova, neutron, **kwargs):
     if image_name:
         kwargs['image'] = utils.find_image(nova, image_name).id
     # build nic with correct network uuid if needed
-    nics = kwargs.pop('nics', None)
+    nics = kwargs.pop('nics', [])
     kwargs['nics'] = []
     for nic in nics:
         name = nic.pop('network_name')
@@ -97,6 +97,15 @@ def create_server(nova, neutron, **kwargs):
         nic['net-id'] = network['id']
         kwargs['nics'].append(nic)
     # Check for and build server
+    volumes = kwargs.pop('volumes', [])
+    kwargs['block_device_mapping'] = {}
+    for volume in volumes:
+        vol = utils.find_volume(cinder, volume['volume_name'])
+        terminate = int(volume.pop('terminate_on_delete', False))
+        device = volume.pop('device_name', None)
+        kwargs['block_device_mapping'][device] = \
+            '%s:::%d' % (vol.id, terminate)
+
     server = utils.find_server(nova, name)
     if server:
         log.info('Server already exists:%s' % server.id)

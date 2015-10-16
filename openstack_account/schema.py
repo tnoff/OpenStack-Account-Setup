@@ -331,6 +331,25 @@ SCHEMA = {
                             "additionalProperties": True
                         }
                     },
+                    "volumes": {
+                        "type" : "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "volume_name": {
+                                    "type": "string"
+                                },
+                                "device_name": {
+                                    "type": "string"
+                                },
+                                "terminate_on_delete": {
+                                    "type": "boolean"
+                                }
+                            },
+                            "required": ["volume_name", "device_name"],
+                            "additionalProperties": False
+                        }
+                    },
                     "wait": {
                         "type": "boolean",
                         "default": settings.SERVER_WAIT

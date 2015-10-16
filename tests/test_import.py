@@ -397,3 +397,76 @@ class TestImport(unittest.TestCase):
         servers = [i.name for i in self.client.nova.servers.list()]
         self.assertTrue(server_name in servers)
         self.__cleanup(results)
+
+    def test_server_boot_volume(self):
+        image_name = utils.random_string()
+        image_url = "http://cloudhyd.com/openstack/images/cirros-0.3.0-x86_64-disk.img"
+        network_name = utils.random_string()
+        subnet_name = utils.random_string()
+        flavor_name = utils.random_string()
+        server_name = utils.random_string()
+        volume_name = utils.random_string()
+        cidr = self.__next_cidr()
+        server_data = [
+            {
+                "network": {
+                    "name": network_name,
+                }
+            },
+            {
+                "subnet": {
+                    "ip_version": "4",
+                    "cidr": cidr,
+                    "name": subnet_name,
+                    "network": network_name,
+                }
+            },
+            {
+                "image": {
+                    "name": image_name,
+                    "container_format": "bare",
+                    "disk_format": "qcow2",
+                    "copy_from": image_url,
+                    "is_public": False,
+                    "wait": True,
+                }
+            },
+            {
+                "flavor": {
+                    "vcpus": 4,
+                    "disk": 0,
+                    "ram": 4096,
+                    "name": flavor_name,
+                }
+            },
+            {
+                "volume": {
+                    "name" : volume_name,
+                    "size" : 5,
+                    "image_name": image_name,
+                    "wait" : True,
+                }
+            },
+            {
+                "server": {
+                    "flavor_name": flavor_name,
+                    "timeout": 1200,
+                    "image_name": image_name,
+                    "name": server_name,
+                    "wait": True,
+                    "nics": [{
+                        "network_name": network_name,
+                    }],
+                    "volumes" : [
+                        {
+                            "volume_name" : volume_name,
+                            "device_name" : "vda",
+                        },
+                    ],
+                }
+            }
+        ]
+        results = self.client.import_config(server_data)
+        servers = [i.name for i in self.client.nova.servers.list()]
+        self.assertTrue(server_name in servers)
+        self.__cleanup(results)
