@@ -16,7 +16,7 @@ def set_cinder_quota(cinder, keystone, **args):
     log.info("Updated cinder quotas for project:%s" % project.id)
     return project.id
 
-def create_volume(cinder, **args):
+def create_volume(cinder, nova, **args):
     log.debug('Create volume:%s' % args)
     name = args.pop('name', None)
     wait = args.pop('wait', settings.VOLUME_WAIT)
@@ -25,6 +25,11 @@ def create_volume(cinder, **args):
     volume = utils.find_volume(cinder, name)
     # Cinder uses 'display_name' for some dumb reason
     args['display_name'] = name
+
+    image_name = args.pop('image_name', None)
+    if image_name:
+        image = utils.find_image(nova, image_name)
+        args['imageRef'] = image.id
     if volume:
         log.info('Volume already exists:%s' % volume.id)
     else:

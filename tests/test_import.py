@@ -291,7 +291,7 @@ class TestImport(unittest.TestCase):
         self.assertTrue(image.is_public)
         self.__cleanup(results)
 
-    def test_cinder(self):
+    def test_volume(self):
         volume_name = utils.random_string()
         cinder_data = [
             {
@@ -308,6 +308,37 @@ class TestImport(unittest.TestCase):
         volume_names = [i.display_name for i in self.client.cinder.volumes.list()]
         self.assertTrue(volume_name in volume_names)
         self.__cleanup(results)
+
+        # make sure can boot volume from image
+        image_name = utils.random_string()
+        image_url = "http://cloudhyd.com/openstack/images/cirros-0.3.0-x86_64-disk.img"
+        cinder_data = [
+            {
+                "image": {
+                    "name": image_name,
+                    "container_format": "bare",
+                    "disk_format": "qcow2",
+                    "copy_from": image_url,
+                    "is_public": False,
+                    "wait": True,
+                }
+            },
+            {
+                "volume": {
+                    "size": 5,
+                    "name": volume_name,
+                    "timeout": 3600,
+                    "wait": True,
+                    "image_name": image_name,
+                }
+            },
+        ]
+        results = self.client.import_config(cinder_data)
+
+        volume_names = [i.display_name for i in self.client.cinder.volumes.list()]
+        self.assertTrue(volume_name in volume_names)
+        self.__cleanup(results)
+
 
     def test_server(self):
         image_name = utils.random_string()

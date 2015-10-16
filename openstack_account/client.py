@@ -123,7 +123,7 @@ class AccountSetup(object): #pylint: disable=too-many-instance-attributes
         return os_neutron.create_router(self.neutron, self.keystone, **args)
 
     def create_volume(self, **args):
-        return os_cinder.create_volume(self.cinder, **args)
+        return os_cinder.create_volume(self.cinder, self.nova, **args)
 
     def create_server(self, **args):
         return os_nova.create_server(self.nova, self.neutron, **args)

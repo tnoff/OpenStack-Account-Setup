@@ -280,6 +280,9 @@ SCHEMA = {
                     "size": {
                         "type": "integer"
                     },
+                    "image_name": {
+                        "type": "string"
+                    },
                     "wait": {
                         "type": "boolean",
                         "default": settings.VOLUME_WAIT
