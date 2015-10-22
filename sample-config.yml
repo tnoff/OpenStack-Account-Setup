@@ -9,10 +9,6 @@
       name: 'arya'
       password: 'joffrey_sucks'
       email: None
-  user:
-     name: 'gentry'
-     password: 'mah_helm'
-     email: None
 
 - project:
       name: 'winterfell'

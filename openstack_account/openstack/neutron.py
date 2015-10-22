@@ -22,7 +22,7 @@ def create_network(neutron, keystone, **args):
         args['tenant_id'] = tenant.id
     network = neutron.create_network({'network' : args})
     log.info('Created network:%s' % network['network']['id'])
-    return network['network']['id']
+    return {'network' : network['network']['id']}
 
 def create_subnet(neutron, keystone, **args):
     log.debug('Creating subnet:%s' % args)
@@ -46,7 +46,7 @@ def create_subnet(neutron, keystone, **args):
         log.error('Cannot create subnet:%s' % str(e))
         return
     log.info('Created subnet:%s' % subnet['subnet']['id'])
-    return subnet['subnet']['id']
+    return {'subnet' : subnet['subnet']['id']}
 
 def create_router(neutron, keystone, **args):
     log.debug('Create router:%s' % args)
@@ -80,4 +80,4 @@ def create_router(neutron, keystone, **args):
                                                                router['id']))
         except neutron_exceptions.BadRequest as e:
             log.error('Cannot add internal subnet:%s' % str(e))
-    return router['id']
+    return {'router' : router['id']}

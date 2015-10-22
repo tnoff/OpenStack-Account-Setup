@@ -14,7 +14,6 @@ from keystoneclient.v2_0 import client as key_v2
 from neutronclient.v2_0 import client as neutron_v2
 from novaclient.v1_1 import client as nova_v1 #pylint: disable=no-name-in-module
 
-from collections import OrderedDict
 from jsonschema import validate
 import logging
 
@@ -36,6 +35,32 @@ SECTION_SCHEMA = {
     'volume' : 'create_volume',
     'server' : 'create_server',
 }
+
+SECTION_KEYS = SECTION_SCHEMA.keys()
+
+class AccountSetupResults(list):
+    '''Custom Account Client Results'''
+    def __add__(self, new_item):
+        assert isinstance(new_item, list), 'add type must be list'
+        for item in new_item:
+            self.append(item)
+
+    def append(self, new_item):
+        assert isinstance(new_item, dict), 'must append dict type'
+        for key in new_item.keys():
+            assert key in SECTION_KEYS, 'key:%s must in section keys' % key
+        super(AccountSetupResults, self).append(new_item)
+
+    def sort_by_keys(self):
+        '''Sort item keys into dict'''
+        my_list = list(self)
+        return_data = {}
+        for item in my_list:
+            for key, value in item.iteritems():
+                return_data.setdefault(key, [])
+                return_data[key].append(value)
+        return return_data
+
 
 class AccountSetup(object): #pylint: disable=too-many-instance-attributes
     def __init__(self, username, password, tenant_name, auth_url):
@@ -128,7 +153,7 @@ class AccountSetup(object): #pylint: disable=too-many-instance-attributes
     def create_server(self, **args):
         return os_nova.create_server(self.nova, self.neutron, self.cinder, **args)
 
-    def __set_clients(self, username, password, tenant_name, auth_url):
+    def __set_client_auth(self, username, password, tenant_name, auth_url):
         # Allow for the override of openstack auth args in each action
         # New args will be applied for every section in that action
         username = username or self.os_username
@@ -142,28 +167,27 @@ class AccountSetup(object): #pylint: disable=too-many-instance-attributes
         validate(config, schema.SCHEMA)
         # schema is a list of items
         # .. we'll call these items 'actions'
-        return_data = OrderedDict()
+        return_data = AccountSetupResults()
         for action in config:
             # for each item reset the openstack clients used
             # .. take either the arguments provided by the user
             # .. or the arguments that are used when authenticating
             # .. the initial client
-            self.__set_clients(action.pop('os_username', None),
-                               action.pop('os_password', None),
-                               action.pop('os_tenant_name', None),
-                               action.pop('os_auth_url', None),)
+            self.__set_client_auth(action.pop('os_username', None),
+                                   action.pop('os_password', None),
+                                   action.pop('os_tenant_name', None),
+                                   action.pop('os_auth_url', None),)
             for key, data in action.iteritems():
                 method = getattr(self, SECTION_SCHEMA[key])
                 result = method(**data)
                 if result:
-                    return_data.setdefault(key, [])
-                    return_data[key].append(result)
+                    return_data.append(result)
         log.info('Finished with results :%s' % return_data)
         return return_data
 
     def export_config(self):
         log.info("Gathering data to export")
-        export_data = []
+        export_data = AccountSetupResults()
         log.info("Gathering keystone data")
         export_data += os_keystone.save_users(self.keystone)
         export_data += os_keystone.save_projects(self.keystone)

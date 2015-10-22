@@ -14,7 +14,7 @@ def set_cinder_quota(cinder, keystone, **args):
         raise OpenStackAccountError("Cannot find project:%s" % tenant_name)
     cinder.quotas.update(project.id, **args)
     log.info("Updated cinder quotas for project:%s" % project.id)
-    return project.id
+    return {'cinder_quota' : project.id}
 
 def create_volume(cinder, nova, **args):
     log.debug('Create volume:%s' % args)
@@ -39,7 +39,7 @@ def create_volume(cinder, nova, **args):
         log.info('Waiting for volume:%s, timeout:%s' % (volume.id, timeout))
         utils.wait_status(cinder.volumes.get, volume.id,
                           ['available'], ['error'], interval, timeout)
-    return volume.id
+    return {'volume' : volume.id}
 
 def save_quotas(cinder, tenant):
     quotas = cinder.quotas.get(tenant.id)
