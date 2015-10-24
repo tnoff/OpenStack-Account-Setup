@@ -36,7 +36,7 @@ SECTION_SCHEMA = {
     'server' : 'create_server',
 }
 
-SECTION_KEYS = SECTION_SCHEMA.keys()
+SECTION_KEYS = SECTION_SCHEMA.keys() + ['os_tenant_name']
 
 class AccountSetupResults(list):
     '''Custom Account Client Results'''
@@ -56,9 +56,11 @@ class AccountSetupResults(list):
         my_list = list(self)
         return_data = {}
         for item in my_list:
-            for key, value in item.iteritems():
+            for key in item:
+                if key == 'os_tenant_name':
+                    continue
                 return_data.setdefault(key, [])
-                return_data[key].append(value)
+                return_data[key].append(item)
         return return_data
 
 
@@ -133,7 +135,7 @@ class AccountSetup(object): #pylint: disable=too-many-instance-attributes
             log.debug('Created source file:%s' % file_name)
         except IOError:
             log.error('Error creating source file:%s' % file_name)
-        return file_name
+        return {'source_file' : file_name}
 
     def create_image(self, **args):
         return os_glance.create_image(self.glance, **args)
@@ -199,8 +201,8 @@ class AccountSetup(object): #pylint: disable=too-many-instance-attributes
             for tenant in self.keystone.tenants.list():
                 if tenant.name in settings.EXPORT_SKIP_PROJECTS:
                     continue
-                export_data += os_nova.save_quotas(self.nova, tenant)
-                export_data += os_cinder.save_quotas(self.cinder, tenant)
+                export_data += [os_nova.save_quotas(self.nova, tenant)]
+                export_data += [os_cinder.save_quotas(self.cinder, tenant)]
                 # set up temp user to get security groups
                 self.keystone.tenants.add_user(tenant.id, user.id, member_role.id)
                 nova = nova_v1.Client(user.name, user_password,

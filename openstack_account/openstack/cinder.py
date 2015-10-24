@@ -48,4 +48,4 @@ def save_quotas(cinder, tenant):
         if key in settings.EXPORT_KEYS_IGNORE:
             quota_args.pop(key)
     quota_args['tenant_name'] = str(tenant.name)
-    return [{'cinder_quota' : quota_args}]
+    return {'cinder_quota' : quota_args}

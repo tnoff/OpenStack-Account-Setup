@@ -16,6 +16,12 @@ deletion_map = {
     'cinder_quota' : {
         'delete' : None,
     },
+    'os_tenant_name' : {
+        'delete' : None,
+    },
+    'source_file' : {
+        'delete' : None,
+    },
     'project' : {
         'delete' : ['keystone', 'tenants', 'delete'],
     },
@@ -63,6 +69,13 @@ def temp_keypair(filename):
     os.chmod(filename, 0600)
     try:
         yield None
+    finally:
+        os.remove(filename)
+
+@contextlib.contextmanager
+def temp_file(filename):
+    try:
+        yield filename
     finally:
         os.remove(filename)
 
@@ -148,12 +161,10 @@ class TestClient(unittest.TestCase):
         for result in reversed(self.results):
             # assume each result is a dictionary with one item
             keys = result.keys()
-            assert len(keys) == 1, 'invalid key in results'
-            key = keys[0]
-            del_function = get_deletion_function(key, self.client)
-            list_function = get_list_function(key, self.client)
-
-            if del_function:
-                value = result[key]
-                del_function(value)
-                wait_deletion(value, list_function)
+            for key in keys:
+                del_function = get_deletion_function(key, self.client)
+                list_function = get_list_function(key, self.client)
+                if del_function:
+                    value = result[key]
+                    del_function(value)
+                    wait_deletion(value, list_function)

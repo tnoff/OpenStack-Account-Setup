@@ -61,8 +61,11 @@ def create_security_group(nova, **kwargs):
         except nova_exceptions.CommandError, e:
             log.error('Cannot create rule:%s' % e)
             continue
-    # TODO add "os_tenant_name" to output of this
-    return {'security_group' : group_id}
+    return {
+        'security_group' : group_id,
+        # projectid means tenant name, nova is dumb
+        'os_tenant_name' : nova.projectid,
+    }
 
 def create_keypair(nova, **kwargs):
     log.debug('Creating keypair:%s' % kwargs)
@@ -147,7 +150,7 @@ def save_quotas(nova, tenant):
         if key in settings.EXPORT_KEYS_IGNORE:
             quota_args.pop(key)
     quota_args['tenant_name'] = str(tenant.name)
-    return [{'nova_quota' : quota_args}]
+    return {'nova_quota' : quota_args}
 
 def save_security_groups(nova, tenant):
     group_data = []

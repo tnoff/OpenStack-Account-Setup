@@ -1,3 +1,5 @@
+import os
+
 from openstack_account.exceptions import OpenStackAccountError
 from openstack_account import utils
 
@@ -30,6 +32,41 @@ class TestImport(test_utils.TestClient):
             }
         ]
         self.results = self.client.import_config(keystone_data)
+
+    def test_source_file(self):
+        user_name = utils.random_string()
+        project_name = utils.random_string()
+        password = utils.random_string()
+        temp_path = os.path.abspath('/tmp/')
+        file_name = os.path.join(temp_path, utils.random_string(prefix='source-'))
+        keystone_data = [
+            {
+                'user' : {
+                    'password' : password,
+                    'name' : user_name,
+                    'email' : None,
+
+                },
+            },
+            {
+                'project' : {
+                    'description' : utils.random_string(),
+                    'role' : 'admin',
+                    'user' : user_name,
+                    'name' : project_name,
+                },
+            },
+            {
+                'source_file' : {
+                    'tenant_name' : project_name,
+                    'user' : user_name,
+                    'file' : file_name,
+                },
+            },
+        ]
+        with test_utils.temp_file(file_name) as _:
+            self.results = self.client.import_config(keystone_data)
+
 
     def test_keystone_password_update(self):
         user_name = utils.random_string()
@@ -136,6 +173,8 @@ class TestImport(test_utils.TestClient):
             },
         ]
         self.results = self.client.import_config(sec_data)
+        sec_group = self.results.sort_by_keys()['security_group'][0]
+        self.assertTrue('os_tenant_name' in sec_group.keys())
 
     def test_keypair(self):
         keyname = utils.random_string()
