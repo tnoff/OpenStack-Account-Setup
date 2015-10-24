@@ -1,7 +1,9 @@
 #######################
 OPENSTACK ACCOUNT SETUP
 #######################
-Deploy resources on an OpenStack cluster based on a config file.
+Import or export resources from an OpenStack cluster. Client allows passing
+of any valid JSON (validity based on schema) into the python client, all CLI
+calls use YAML.
 
 Current supported modules:
 
@@ -33,15 +35,17 @@ Command Line
 ============
 .. code::
 
-    $ os-account --help
-    usage: os-account [-h] [--username USERNAME] [--password PASSWORD]
-                      [--tenant-name TENANT_NAME] [--auth-url AUTH_URL]
-                      config_file
+    usage: openstack-account [-h] [--username USERNAME] [--password PASSWORD]
+                             [--tenant-name TENANT_NAME] [--auth-url AUTH_URL]
+                             [--debug]
+                             {import,export} ...
 
     Create & Setup OpenStack Accounts
 
     positional arguments:
-      config_file           Config file to use
+      {import,export}       Command
+        import              Import config
+        export              Export config
 
     optional arguments:
       -h, --help            show this help message and exit
@@ -50,6 +54,7 @@ Command Line
       --tenant-name TENANT_NAME
                             OpenStack Auth tenant name
       --auth-url AUTH_URL   OpenStack Auth keystone url
+      --debug               Show debug output
 
 ================
 Python Scripting
@@ -59,16 +64,30 @@ Python Scripting
     >>> from openstack_account.client import AccountSetup
     >>> help(AccountSetup)
 
-=============
-Sample Config
-=============
+====================
+Sample Import Config
+====================
 See sample config YAML file
+
+=============
+Export Config
+=============
+Exported configs will be JSON objects, with CLI this will be written to a
+YAML file.
+
+Currently only supports "metadata" such as:
+
+- users
+- projects
+- roles
+- flavors
+- quotas
+- security groups
 
 =======
 Testing
 =======
-I concluded the best way to test this was to actually use it against a cluster
-and have the tests check that the resources that should be there, are there.
+Functional tests for import/export of basic configs.
 
 Use ``tests/settings.py`` to specify which cluster to use. Neutron should
 be installed on the cluster for tests to pass.
