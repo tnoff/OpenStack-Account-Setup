@@ -13,14 +13,14 @@ Current supported modules:
 - Glance images
 - Nova security groups
 - Nova keypairs
-- OpenStack source RC files
+- OpenStack source RC files ( import only )
 - Nova quotas
 - Cinder quotas
 - Neutron networks
 - Neutron subnets
 - Neutron routers
-- Cinder volumes
-- Nova instances
+- Cinder volumes ( import only )
+- Nova instances ( import only )
 
 =======
 Install
@@ -83,6 +83,10 @@ Currently only supports "metadata" such as:
 - flavors
 - quotas
 - security groups
+
+Also support resource data:
+
+- images
 
 =======
 Testing
