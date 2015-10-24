@@ -1,4 +1,4 @@
 *.pyc
 *.swp
 my_config.yml
-tests/settings.py
+tests/override_settings.py

@@ -93,5 +93,5 @@ Testing
 =======
 Functional tests for import/export of basic configs.
 
-Use ``tests/settings.py`` to specify which cluster to use. Neutron should
-be installed on the cluster for tests to pass.
+Options for tests are defined in ``tests/settings.py`` and can be overriden
+with the ``tests/override_settings.py`` file.
