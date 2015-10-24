@@ -135,17 +135,6 @@ def special_pre_deletion(client, results):
                     except NotFound:
                         continue
 
-def export_subdata(item_list, accepted_keys):
-    data = []
-    for item in item_list:
-        add = True
-        for key in item:
-            if key not in accepted_keys:
-                add = False
-                break
-        if add:
-            data.append(item)
-    return data
 
 class TestClient(unittest.TestCase):
     def setUp(self):
