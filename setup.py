@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import setuptools
 
-VERSION = '1.1'
+VERSION = '1.2'
 
 setuptools.setup(
     author='Tyler Daniel North',
@@ -20,10 +20,10 @@ setuptools.setup(
     ],
     entry_points={
         'console_scripts' : [
-            'openstack-account = scripts.cli:main',
+            'openstack-portation= scripts.cli:main',
         ]
     },
     packages=setuptools.find_packages(),
-    name='openstack_account',
+    name='openstack_portation',
     version=VERSION,
 )

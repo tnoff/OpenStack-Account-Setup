@@ -1,5 +1,5 @@
-from openstack_account import settings
-from openstack_account import utils
+from openstack_portation import settings
+from openstack_portation import utils
 
 import logging
 import os

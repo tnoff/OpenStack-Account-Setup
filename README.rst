@@ -1,6 +1,6 @@
-#######################
-OPENSTACK ACCOUNT SETUP
-#######################
+###################
+OpenStack Portation
+###################
 Import or export resources from an OpenStack cluster. Client allows passing
 of any valid JSON (validity based on schema) into the python client, all CLI
 calls use YAML.
@@ -27,20 +27,20 @@ Install
 =======
 .. code::
 
-    $ git clone https://github.com/tylernorth/OpenStack-Account-Setup.git
-    $ pip install OpenStack-Account-Setup
+    $ git clone https://github.com/tnoff/OpenStack-Portation.git
+    $ pip install OpenStack-Portaiton/
 
 ============
 Command Line
 ============
 .. code::
 
-    usage: openstack-account [-h] [--username USERNAME] [--password PASSWORD]
-                             [--tenant-name TENANT_NAME] [--auth-url AUTH_URL]
-                             [--debug]
-                             {import,export} ...
+    usage: openstack-portation [-h] [--username USERNAME] [--password PASSWORD]
+                               [--tenant-name TENANT_NAME] [--auth-url AUTH_URL]
+                               [--debug]
+                               {import,export} ...
 
-    Create & Setup OpenStack Accounts
+    Import and export Openstack resources
 
     positional arguments:
       {import,export}       Command
@@ -56,13 +56,14 @@ Command Line
       --auth-url AUTH_URL   OpenStack Auth keystone url
       --debug               Show debug output
 
+
 ================
 Python Scripting
 ================
 .. code::
 
-    >>> from openstack_account.client import AccountSetup
-    >>> help(AccountSetup)
+    >>> from openstack_portation.client import PortationClient
+    >>> help(PortationClient)
 
 ====================
 Sample Import Config

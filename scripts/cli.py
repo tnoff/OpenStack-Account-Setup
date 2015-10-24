@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from openstack_account.client import AccountSetup
+from openstack_portation.client import PortationClient
 
 import argparse
 import logging
@@ -8,7 +8,7 @@ import sys
 import yaml
 
 log_format = '%(asctime)s-%(levelname)s-%(message)s'
-log = logging.getLogger('openstack_account')
+log = logging.getLogger('openstack_portation')
 log.setLevel(logging.INFO)
 handle = logging.StreamHandler()
 handle.setLevel(logging.INFO)
@@ -17,7 +17,7 @@ handle.setFormatter(form)
 log.addHandler(handle)
 
 def parse_args():
-    p = argparse.ArgumentParser(description='Create & Setup OpenStack Accounts')
+    p = argparse.ArgumentParser(description='Import and export Openstack resources')
     p.add_argument('--username', help='OpenStack Auth username')
     p.add_argument('--password', help='OpenStack Auth password')
     p.add_argument('--tenant-name', help='OpenStack Auth tenant name')
@@ -58,11 +58,11 @@ def main():
     args = get_env_args(parse_args())
     if args.debug:
         log.setLevel(logging.DEBUG)
-    log.debug('Initialzing Account Setup')
-    a = AccountSetup(args.username,
-                     args.password,
-                     args.tenant_name,
-                     args.auth_url)
+    log.debug('Initialzing Client')
+    a = PortationClient(args.username,
+                        args.password,
+                        args.tenant_name,
+                        args.auth_url)
     if args.command == 'import':
         with open(args.config_file, 'r') as f:
             log.debug('Loading configs from:%s' % args.config_file)

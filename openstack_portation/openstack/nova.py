@@ -1,6 +1,6 @@
-from openstack_account import settings
-from openstack_account import utils
-from openstack_account.exceptions import OpenStackAccountError
+from openstack_portation import settings
+from openstack_portation import utils
+from openstack_portation.exceptions import OpenStackPortationError
 
 from novaclient import exceptions as nova_exceptions
 
@@ -25,7 +25,7 @@ def set_nova_quota(nova, keystone, **kwargs):
     tenant_name = kwargs.pop('tenant_name', None)
     project = utils.find_project(keystone, tenant_name)
     if not project:
-        raise OpenStackAccountError("Cannot find project:%s" % tenant_name)
+        raise OpenStackPortationError("Cannot find project:%s" % tenant_name)
     try:
         nova.quotas.update(project.id, **kwargs)
         log.info("Set quotas for project:%s" % project.id)

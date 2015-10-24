@@ -1,4 +1,4 @@
-from openstack_account import utils
+from openstack_portation import utils
 
 from tests import utils as test_utils
 

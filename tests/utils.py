@@ -4,7 +4,7 @@ import os
 import time
 import unittest
 
-from openstack_account.client import AccountSetup, AccountSetupResults
+from openstack_portation.client import PortationClient, PortationResults
 from tests import settings
 
 from neutronclient.common.exceptions import NotFound
@@ -138,12 +138,12 @@ def special_pre_deletion(client, results):
 
 class TestClient(unittest.TestCase):
     def setUp(self):
-        self.client = AccountSetup(settings.OS_USERNAME,
-                                   settings.OS_PASSWORD,
-                                   settings.OS_TENANT_NAME,
-                                   settings.OS_AUTH_URL,)
+        self.client = PortationClient(settings.OS_USERNAME,
+                                      settings.OS_PASSWORD,
+                                      settings.OS_TENANT_NAME,
+                                      settings.OS_AUTH_URL,)
 
-        self.results = AccountSetupResults()
+        self.results = PortationResults()
 
     def tearDown(self):
         special_pre_deletion(self.client, self.results)

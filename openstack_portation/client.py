@@ -1,12 +1,12 @@
-from openstack_account import settings
-from openstack_account import schema
-from openstack_account import utils
+from openstack_portation import settings
+from openstack_portation import schema
+from openstack_portation import utils
 
-from openstack_account.openstack import cinder as os_cinder
-from openstack_account.openstack import glance as os_glance
-from openstack_account.openstack import keystone as os_keystone
-from openstack_account.openstack import neutron as os_neutron
-from openstack_account.openstack import nova as os_nova
+from openstack_portation.openstack import cinder as os_cinder
+from openstack_portation.openstack import glance as os_glance
+from openstack_portation.openstack import keystone as os_keystone
+from openstack_portation.openstack import neutron as os_neutron
+from openstack_portation.openstack import nova as os_nova
 
 from cinderclient.v1 import client as cinder_v1
 from glanceclient import Client as glance_client
@@ -38,7 +38,7 @@ SECTION_SCHEMA = {
 
 SECTION_KEYS = SECTION_SCHEMA.keys() + ['os_tenant_name']
 
-class AccountSetupResults(list):
+class PortationResults(list):
     '''Custom Account Client Results'''
     def __add__(self, new_item):
         assert isinstance(new_item, list), 'add type must be list'
@@ -49,7 +49,7 @@ class AccountSetupResults(list):
         assert isinstance(new_item, dict), 'must append dict type'
         for key in new_item.keys():
             assert key in SECTION_KEYS, 'key:%s must in section keys' % key
-        super(AccountSetupResults, self).append(new_item)
+        super(PortationResults, self).append(new_item)
 
     def sort_by_keys(self):
         '''Sort item keys into dict'''
@@ -64,7 +64,7 @@ class AccountSetupResults(list):
         return return_data
 
 
-class AccountSetup(object): #pylint: disable=too-many-instance-attributes
+class PortationClient(object): #pylint: disable=too-many-instance-attributes
     def __init__(self, username, password, tenant_name, auth_url):
         self.os_username = username
         self.os_password = password
@@ -169,7 +169,7 @@ class AccountSetup(object): #pylint: disable=too-many-instance-attributes
         validate(config, schema.SCHEMA)
         # schema is a list of items
         # .. we'll call these items 'actions'
-        return_data = AccountSetupResults()
+        return_data = PortationResults()
         for action in config:
             # for each item reset the openstack clients used
             # .. take either the arguments provided by the user
@@ -189,7 +189,7 @@ class AccountSetup(object): #pylint: disable=too-many-instance-attributes
 
     def export_config(self):
         log.info("Gathering data to export")
-        export_data = AccountSetupResults()
+        export_data = PortationResults()
         log.info("Gathering keystone data")
         export_data += os_keystone.save_users(self.keystone)
         export_data += os_keystone.save_projects(self.keystone)
@@ -214,7 +214,7 @@ class AccountSetup(object): #pylint: disable=too-many-instance-attributes
         if save_directory:
             save_directory = utils.check_directory(save_directory)
         log.info("Gathering image data and/or metadata")
-        export_data = AccountSetupResults()
+        export_data = PortationResults()
         # the glance client will not list all images for some reason, use nova
         for image in self.nova.images.list():
             export_data += [os_glance.save_image_meta(self.glance, self.keystone,

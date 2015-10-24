@@ -1,4 +1,4 @@
-from openstack_account import settings
+from openstack_portation import settings
 
 SCHEMA = {
     "title": "actions",

@@ -1,7 +1,7 @@
 import os
 
-from openstack_account.exceptions import OpenStackAccountError
-from openstack_account import utils
+from openstack_portation.exceptions import OpenStackPortationError
+from openstack_portation import utils
 
 from tests import utils as test_utils
 
@@ -151,7 +151,7 @@ class TestImport(test_utils.TestClient):
         # Delete tenant, remove from data, make sure exception thrown
         self.client.keystone.tenants.delete(tenant_id)
         quota_data.pop(0)
-        self.assertRaises(OpenStackAccountError,
+        self.assertRaises(OpenStackPortationError,
                           self.client.import_config, quota_data)
 
     def test_security_group(self):

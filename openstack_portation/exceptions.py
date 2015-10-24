@@ -1,0 +1,2 @@
+class OpenStackPortationError(Exception):
+    pass

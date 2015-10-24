@@ -1,6 +1,6 @@
-from openstack_account import settings
-from openstack_account import utils
-from openstack_account.exceptions import OpenStackAccountError
+from openstack_portation import settings
+from openstack_portation import utils
+from openstack_portation.exceptions import OpenStackPortationError
 
 import logging
 
@@ -11,7 +11,7 @@ def set_cinder_quota(cinder, keystone, **args):
     tenant_name = args.pop('tenant_name', None)
     project = utils.find_project(keystone, tenant_name)
     if not project:
-        raise OpenStackAccountError("Cannot find project:%s" % tenant_name)
+        raise OpenStackPortationError("Cannot find project:%s" % tenant_name)
     cinder.quotas.update(project.id, **args)
     log.info("Updated cinder quotas for project:%s" % project.id)
     return {'cinder_quota' : project.id}
