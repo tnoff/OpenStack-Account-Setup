@@ -5,7 +5,7 @@ VERSION = '1.2'
 
 setuptools.setup(
     author='Tyler Daniel North',
-    author_email='tylernorth18@gmail.com',
+    author_email='ty_north@yahoo.com',
     description='OpenStack Account Setup Script',
     install_requires=[
         'python-cinderclient',
